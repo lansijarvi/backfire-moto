@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-border: #262626;
+  --color-accent: #e8402c;
+  --font-heading: 'Bebas Neue', system-ui, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: #e5e5e5;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
