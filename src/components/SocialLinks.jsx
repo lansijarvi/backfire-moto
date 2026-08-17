@@ -15,7 +15,18 @@ const ICONS = {
   youtube: (
     <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8M9.6 15.5V8.5l6.3 3.5z" />
   ),
+  x: (
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  ),
+  email: (
+    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5z" />
+  ),
 };
+
+// email isn't a URL in Firestore — just the address — so build the mailto: link here.
+function hrefFor(key, value) {
+  return key === 'email' ? `mailto:${value}` : value;
+}
 
 export default function SocialLinks({ className = '' }) {
   const [links, setLinks] = useState(null);
@@ -26,7 +37,7 @@ export default function SocialLinks({ className = '' }) {
     });
   }, []);
 
-  const DISPLAY_ORDER = ['instagram', 'youtube', 'facebook', 'tiktok'];
+  const DISPLAY_ORDER = ['instagram', 'youtube', 'facebook', 'x', 'tiktok', 'email'];
   const entries = DISPLAY_ORDER.filter((key) => links?.[key] && ICONS[key]).map((key) => [key, links[key]]);
 
   if (entries.length === 0) return null;
@@ -36,9 +47,9 @@ export default function SocialLinks({ className = '' }) {
       {entries.map(([key, url]) => (
         <a
           key={key}
-          href={url}
-          target="_blank"
-          rel="noreferrer"
+          href={hrefFor(key, url)}
+          target={key === 'email' ? undefined : '_blank'}
+          rel={key === 'email' ? undefined : 'noreferrer'}
           aria-label={key}
           className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-white hover:border-white transition-colors"
         >

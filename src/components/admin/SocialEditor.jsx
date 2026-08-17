@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-const FIELDS = ['instagram', 'facebook', 'tiktok', 'youtube'];
+const FIELDS = ['instagram', 'youtube', 'facebook', 'x', 'tiktok', 'email'];
 const EMPTY = Object.fromEntries(FIELDS.map((f) => [f, '']));
+
+function placeholderFor(field) {
+  return field === 'email' ? 'backfiremoto@gmail.com' : `https://${field}.com/backfiremoto`;
+}
 
 export default function SocialEditor() {
   const [form, setForm] = useState(EMPTY);
@@ -38,7 +42,7 @@ export default function SocialEditor() {
           <input
             value={form[field]}
             onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-            placeholder={`https://${field}.com/backfiremoto`}
+            placeholder={placeholderFor(field)}
             className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
           />
         </label>
