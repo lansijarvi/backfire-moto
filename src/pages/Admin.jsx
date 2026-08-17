@@ -6,14 +6,12 @@ import EventEditor from '../components/admin/EventEditor';
 import ProductsEditor from '../components/admin/ProductsEditor';
 import GalleryEditor from '../components/admin/GalleryEditor';
 import SocialEditor from '../components/admin/SocialEditor';
-import SubscribersList from '../components/admin/SubscribersList';
 
 const TABS = [
   { id: 'event', label: 'Event', Component: EventEditor },
   { id: 'products', label: 'Shop', Component: ProductsEditor },
   { id: 'gallery', label: 'Gallery', Component: GalleryEditor },
   { id: 'social', label: 'Social Links', Component: SocialEditor },
-  { id: 'subscribers', label: 'Subscribers', Component: SubscribersList },
 ];
 
 export default function Admin() {

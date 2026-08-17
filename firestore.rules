@@ -22,11 +22,5 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
-
-    // Newsletter — anyone can sign up (create only), only admin can read/manage the list
-    match /newsletter/{docId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
   }
 }

@@ -3,6 +3,7 @@
 Site for backfiremoto.com — event flyer landing page, t-shirt shop, photo/video gallery,
 newsletter signup, and an admin panel for editing everything. Built with React + Vite,
 Firebase (Auth/Firestore/Storage) for the backend, hosted free on GitHub Pages.
+Newsletter signups go straight to Mailchimp.
 
 ## Local development
 
@@ -42,6 +43,17 @@ and `storage.rules`.
 
 1. In your Stripe dashboard, create a **Payment Link** for each shirt/size.
 2. In `/admin` → Shop, add the product with its price, image, and the Payment Link URL.
+
+## Newsletter (Mailchimp, no backend needed)
+
+The signup form on the homepage posts directly to a Mailchimp audience via a hidden
+iframe — no API keys in the app, no Cloud Functions. Subscribers land straight in
+Mailchimp; manage the list, campaigns, and double opt-in emails from there.
+
+To point it at a different Mailchimp audience or account, grab a fresh embedded-form
+snippet from Mailchimp (Audience → Signup forms → Embedded forms, or search "signup form"
+in Mailchimp if it's moved) and update `MAILCHIMP_ACTION` and `HONEYPOT_NAME` in
+`src/components/NewsletterSignup.jsx`.
 
 ## Deploying to GitHub Pages
 
