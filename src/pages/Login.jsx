@@ -24,7 +24,10 @@ export default function Login() {
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm flex flex-col items-center gap-4 text-center">
-        <h1 className="font-heading text-3xl text-white mb-2">Admin Login</h1>
+        <h1 className="font-heading text-3xl text-white">Admin Login</h1>
+        <p className="text-sm text-neutral-500 -mt-2 mb-2">
+          Sign in with the Backfire Moto admin Google account to manage the site.
+        </p>
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}

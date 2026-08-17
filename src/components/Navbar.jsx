@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { ADMIN_UID } from '../adminConfig';
 
 const LINKS = [
   { to: '/', label: 'Home', end: true },
@@ -9,6 +11,8 @@ const LINKS = [
 
 export default function Navbar() {
   const { totalCount, setIsOpen } = useCart();
+  const { user } = useAuth();
+  const isAdmin = user?.uid === ADMIN_UID;
 
   return (
     <header className="border-b border-neutral-800 sticky top-0 bg-bg/90 backdrop-blur z-40">
@@ -29,6 +33,16 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `transition-colors ${isActive ? 'text-accent' : 'text-neutral-400 hover:text-white'}`
+              }
+            >
+              Admin
+            </NavLink>
+          )}
           <button
             onClick={() => setIsOpen(true)}
             aria-label="Open cart"
