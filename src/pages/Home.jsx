@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import NewsletterSignup from '../components/NewsletterSignup';
+import logo from '../assets/backfire-ballard-logo.png';
 
 export default function Home() {
   const [event, setEvent] = useState(null);
@@ -18,6 +19,8 @@ export default function Home() {
     <div className="flex-1">
       <section className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-8">
         <div className="flex flex-col items-center gap-8 w-full">
+          <img src={logo} alt="Backfire Ballard Motorcycle Night" className="w-full max-w-xs" />
+
           {(event?.title || event?.dateText) && (
             <div>
               {event?.title && (
