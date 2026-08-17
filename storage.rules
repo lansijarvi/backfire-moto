@@ -4,7 +4,7 @@ service firebase.storage {
     // Flyer, product, and gallery images/videos — public read, admin-only upload
     match /{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == 'eKhkvvFajRX6XfOP3baFBh5n5V33';
     }
   }
 }

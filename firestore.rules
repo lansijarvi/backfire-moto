@@ -1,28 +1,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'eKhkvvFajRX6XfOP3baFBh5n5V33';
+    }
+
     // Homepage event info + social links — public read, admin-only write
     match /settings/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     // Shop products — public read, admin-only write
     match /products/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     // Photos/videos — public read, admin-only write
     match /gallery/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     // Newsletter — anyone can sign up (create only), only admin can read/manage the list
     match /newsletter/{docId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

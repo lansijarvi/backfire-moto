@@ -27,10 +27,16 @@ In the [Firebase console](https://console.firebase.google.com/project/studio-771
    Firestore → Rules and publish.
 4. **Storage rules** — paste the contents of [`storage.rules`](storage.rules) into
    Storage → Rules and publish.
-5. **Authentication → Sign-in method** — make sure Email/Password is enabled.
+5. **Authentication → Sign-in method** — make sure Google is enabled.
 6. **Authentication → Settings → Authorized domains** — add your GitHub Pages domain
    (`<username>.github.io`) and `backfiremoto.com` once DNS is pointed there, or admin
    login will fail from the live site.
+
+Admin access is restricted to one Google account by UID, checked both in the app
+(`src/adminConfig.js`) and in the security rules — so even though Google Sign-In is open
+to any Google account, only that UID can read/write admin data. To change who the admin
+is, update `ADMIN_UID` in `src/adminConfig.js` and the matching UID in `firestore.rules`
+and `storage.rules`.
 
 ## Shop: adding a t-shirt (Stripe Payment Links, no backend needed)
 
