@@ -43,7 +43,7 @@ export default function ProductsEditor() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const fileRef = ref(storage, `products/${Date.now()}-${file.name}`);
+    const fileRef = ref(storage, `backfire/products/${Date.now()}-${file.name}`);
     await uploadBytes(fileRef, file);
     const url = await getDownloadURL(fileRef);
     update('imageUrl', url);

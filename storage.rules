@@ -1,10 +1,28 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Flyer, product, and gallery images/videos — public read, admin-only upload
-    match /{allPaths=**} {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'eKhkvvFajRX6XfOP3baFBh5n5V33';
+    }
+
+    match /backfire/gallery/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == 'eKhkvvFajRX6XfOP3baFBh5n5V33';
+      allow write: if isAdmin() && request.resource.size < 200 * 1024 * 1024;
+    }
+    match /backfire/hero/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+    }
+    match /backfire/events/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+    }
+    match /backfire/products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -25,7 +25,7 @@ export default function EventEditor() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const fileRef = ref(storage, `event/flyer-${Date.now()}-${file.name}`);
+    const fileRef = ref(storage, `backfire/hero/flyer-${Date.now()}-${file.name}`);
     await uploadBytes(fileRef, file);
     const url = await getDownloadURL(fileRef);
     update('flyerImageUrl', url);

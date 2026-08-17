@@ -28,7 +28,7 @@ export default function GalleryEditor() {
     if (!file) return;
     setUploading(true);
     const type = file.type.startsWith('video') ? 'video' : 'photo';
-    const fileRef = ref(storage, `gallery/${Date.now()}-${file.name}`);
+    const fileRef = ref(storage, `backfire/gallery/${Date.now()}-${file.name}`);
     await uploadBytes(fileRef, file);
     const url = await getDownloadURL(fileRef);
     await addDoc(collection(db, 'gallery'), {
