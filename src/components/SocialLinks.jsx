@@ -26,7 +26,8 @@ export default function SocialLinks({ className = '' }) {
     });
   }, []);
 
-  const entries = Object.entries(links || {}).filter(([key, url]) => url && ICONS[key]);
+  const DISPLAY_ORDER = ['instagram', 'youtube', 'facebook', 'tiktok'];
+  const entries = DISPLAY_ORDER.filter((key) => links?.[key] && ICONS[key]).map((key) => [key, links[key]]);
 
   if (entries.length === 0) return null;
 
