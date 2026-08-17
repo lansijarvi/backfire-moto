@@ -52,7 +52,9 @@ export default function Home() {
         </div>
 
         <div className="w-full flex flex-col items-center gap-3 pt-8 border-t border-neutral-800">
-          <h2 className="text-sm uppercase tracking-widest text-neutral-500">Stay in the loop</h2>
+          <h2 className="text-sm uppercase tracking-widest text-neutral-500">
+            Stay in the loop for all things Backfire Moto
+          </h2>
           <NewsletterSignup />
         </div>
       </section>
