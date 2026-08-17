@@ -10,7 +10,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 
-const EMPTY = { name: '', price: '', sizes: '', imageUrl: '', stripeLink: '', active: true };
+const EMPTY = { name: '', price: '', sizes: '', imageUrl: '', active: true };
 
 export default function ProductsEditor() {
   const [products, setProducts] = useState([]);
@@ -96,7 +96,7 @@ export default function ProductsEditor() {
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-neutral-400">
-          Sizes
+          Sizes (comma-separated — shows as a picker in the shop; leave blank for stickers/pins)
           <input
             value={form.sizes}
             onChange={(e) => update('sizes', e.target.value)}
@@ -111,15 +111,6 @@ export default function ProductsEditor() {
           {form.imageUrl && (
             <img src={form.imageUrl} alt="Preview" className="mt-2 max-w-[140px] rounded border border-neutral-800" />
           )}
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-neutral-400">
-          Stripe payment link
-          <input
-            value={form.stripeLink}
-            onChange={(e) => update('stripeLink', e.target.value)}
-            placeholder="https://buy.stripe.com/..."
-            className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
-          />
         </label>
         <label className="flex items-center gap-2 text-sm text-neutral-400">
           <input

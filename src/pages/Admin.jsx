@@ -6,10 +6,12 @@ import EventEditor from '../components/admin/EventEditor';
 import ProductsEditor from '../components/admin/ProductsEditor';
 import GalleryEditor from '../components/admin/GalleryEditor';
 import SocialEditor from '../components/admin/SocialEditor';
+import OrdersList from '../components/admin/OrdersList';
 
 const TABS = [
   { id: 'event', label: 'Event', Component: EventEditor },
   { id: 'products', label: 'Shop', Component: ProductsEditor },
+  { id: 'orders', label: 'Orders', Component: OrdersList },
   { id: 'gallery', label: 'Gallery', Component: GalleryEditor },
   { id: 'social', label: 'Social Links', Component: SocialEditor },
 ];
