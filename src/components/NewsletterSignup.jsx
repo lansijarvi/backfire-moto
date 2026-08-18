@@ -1,9 +1,5 @@
 import { useState } from 'react';
-
-const MAILCHIMP_ACTION =
-  'https://backfiremoto.us13.list-manage.com/subscribe/post?u=e3fd264f789dc3e1701ddb6ff&id=997d4e61b2&f_id=006ad6e6f0';
-// Anti-bot honeypot field Mailchimp expects to stay empty — real users never see or fill this in.
-const HONEYPOT_NAME = 'b_e3fd264f789dc3e1701ddb6ff_997d4e61b2';
+import { MAILCHIMP_ACTION, MAILCHIMP_HONEYPOT_NAME } from '../mailchimpConfig';
 
 export default function NewsletterSignup() {
   const [status, setStatus] = useState('idle'); // idle | submitting | done
@@ -37,7 +33,7 @@ export default function NewsletterSignup() {
           className="flex-1 min-w-0 bg-surface border border-neutral-700 rounded px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
         />
         <div aria-hidden="true" className="absolute -left-[5000px]">
-          <input type="text" name={HONEYPOT_NAME} tabIndex="-1" defaultValue="" />
+          <input type="text" name={MAILCHIMP_HONEYPOT_NAME} tabIndex="-1" defaultValue="" />
         </div>
         <button
           type="submit"

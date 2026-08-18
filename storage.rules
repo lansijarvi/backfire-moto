@@ -21,12 +21,13 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
     }
-    // Community photo submissions — anyone can upload (moderation happens in Firestore,
-    // not here), capped at 20MB and images only.
+    // Community photo/video submissions — anyone can upload (moderation happens in
+    // Firestore, not here), capped at 50MB, images or short videos only.
     match /backfire/community/{allPaths=**} {
       allow read: if true;
-      allow write: if request.resource.size < 20 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+      allow write: if request.resource.size < 50 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType.matches('video/.*'));
     }
     match /{allPaths=**} {
       allow read, write: if false;

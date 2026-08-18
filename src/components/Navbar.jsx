@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ADMIN_UID } from '../adminConfig';
@@ -15,6 +18,14 @@ export default function Navbar() {
   const { totalCount, setIsOpen } = useCart();
   const { user } = useAuth();
   const isAdmin = user?.uid === ADMIN_UID;
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    return onSnapshot(query(collection(db, 'communityPhotos'), where('status', '==', 'pending')), (snap) => {
+      setPendingCount(snap.size);
+    });
+  }, [isAdmin]);
 
   return (
     <header className="border-b border-neutral-800 sticky top-0 bg-bg/90 backdrop-blur z-40">
@@ -39,10 +50,15 @@ export default function Navbar() {
             <NavLink
               to="/admin"
               className={({ isActive }) =>
-                `transition-colors ${isActive ? 'text-accent' : 'text-neutral-400 hover:text-white'}`
+                `relative transition-colors ${isActive ? 'text-accent' : 'text-neutral-400 hover:text-white'}`
               }
             >
               Admin
+              {pendingCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-accent text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {pendingCount}
+                </span>
+              )}
             </NavLink>
           )}
           <button
