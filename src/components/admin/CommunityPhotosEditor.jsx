@@ -2,27 +2,25 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
+function mediaOf(post) {
+  return { url: post.url || post.media?.[0]?.url, type: post.type || post.media?.[0]?.type };
+}
+
 function SubmissionCard({ post, children }) {
+  const { url, type } = mediaOf(post);
   return (
     <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface">
-      <div className={(post.media?.length || 0) > 1 ? 'grid grid-cols-2 gap-0.5' : ''}>
-        {(post.media || []).map((m, i) =>
-          m.type === 'video' ? (
-            <video key={i} src={m.url} className="w-full aspect-square object-cover" />
-          ) : (
-            <img key={i} src={m.url} alt="" className="w-full aspect-square object-cover" />
-          )
-        )}
-      </div>
+      {url &&
+        (type === 'video' ? (
+          <video src={url} className="w-full aspect-square object-cover" />
+        ) : (
+          <img src={url} alt="" className="w-full aspect-square object-cover" />
+        ))}
       <div className="p-3 flex flex-col gap-2 text-xs">
-        {post.name && <p className="text-neutral-300">{post.name}</p>}
-        {post.email && <p className="text-neutral-500">{post.email}</p>}
-        {post.story && <p className="text-neutral-400">{post.story}</p>}
         <p className={post.usageConsent ? 'text-neutral-600' : 'text-red-400'}>
           {post.usageConsent ? 'Usage rights granted' : 'No usage consent on file'}
         </p>
-        <p className="text-neutral-600">{post.newsletterOptIn ? 'Opted into newsletter' : 'Not opted in'}</p>
-        <div className="flex gap-2 mt-1">{children}</div>
+        <div className="flex gap-2">{children}</div>
       </div>
     </div>
   );
