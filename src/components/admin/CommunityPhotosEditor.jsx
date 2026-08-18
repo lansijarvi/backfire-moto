@@ -203,7 +203,7 @@ export default function CommunityPhotosEditor() {
         {pending.length === 0 ? (
           <p className="text-sm text-neutral-500">Nothing waiting.</p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {pending.map((post) => (
               <PendingCard
                 key={post.id}
@@ -224,7 +224,7 @@ export default function CommunityPhotosEditor() {
         {approved.length === 0 ? (
           <p className="text-sm text-neutral-500">None yet.</p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {approved.map((post) => (
               <ApprovedCard
                 key={post.id}
