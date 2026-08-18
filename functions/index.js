@@ -1,4 +1,5 @@
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
@@ -8,6 +9,7 @@ const db = getFirestore();
 
 const STRIPE_SECRET_KEY = defineSecret('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
+const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 
 // Site currently lives at /backfire-moto/ (GitHub Pages project path) and will move to
 // / once backfiremoto.com DNS is cut over — see vite.config.js. Only allow these two so
@@ -162,5 +164,43 @@ exports.stripeWebhook = onRequest(
     }
 
     res.json({ received: true });
+  }
+);
+
+exports.notifyCommunityPhotoSubmission = onDocumentCreated(
+  { document: 'communityPhotos/{docId}', secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const data = event.data.data();
+    const mediaCount = (data.media || []).length;
+
+    const bodyLines = [
+      `Name: ${data.name || '(not given)'}`,
+      `Email: ${data.email || '(not given)'}`,
+      `Newsletter opt-in: ${data.newsletterOptIn ? 'yes' : 'no'}`,
+      `Media: ${mediaCount} file${mediaCount === 1 ? '' : 's'}`,
+      '',
+      data.story ? `Story:\n${data.story}` : '(no story provided)',
+      '',
+      'Review it at https://backfiremoto.com/admin',
+    ];
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Backfire Moto <onboarding@resend.dev>',
+        to: ['backfiremoto@gmail.com'],
+        reply_to: data.email ? [data.email] : undefined,
+        subject: `New community photo submission${data.name ? ` from ${data.name}` : ''}`,
+        text: bodyLines.join('\n'),
+      }),
+    });
+
+    if (!res.ok) {
+      console.error('Resend send failed:', res.status, await res.text());
+    }
   }
 );
