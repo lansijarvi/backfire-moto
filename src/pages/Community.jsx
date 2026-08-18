@@ -30,7 +30,10 @@ export default function Community() {
     ).then((snap) => {
       const flat = snap.docs.flatMap((d) => {
         const data = d.data();
-        const media = data.media || (data.url ? [{ url: data.url, type: data.type }] : []);
+        const allMedia = data.media || (data.url ? [{ url: data.url, type: data.type }] : []);
+        const media = data.includedMedia
+          ? allMedia.filter((m) => data.includedMedia.includes(m.url))
+          : allMedia;
         return media.map((m) => ({ ...m, id: d.id }));
       });
       setTiles(flat);
