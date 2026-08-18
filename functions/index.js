@@ -191,7 +191,7 @@ exports.notifyCommunityPhotoSubmission = onDocumentCreated(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Backfire Moto <onboarding@resend.dev>',
+        from: 'Backfire Moto <notifications@backfiremoto.com>',
         to: ['backfiremoto@gmail.com'],
         reply_to: data.email ? [data.email] : undefined,
         subject: `New community photo submission${data.name ? ` from ${data.name}` : ''}`,
