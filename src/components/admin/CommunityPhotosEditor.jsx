@@ -20,9 +20,13 @@ function SubmissionCard({ post, children }) {
         )}
       </div>
       <div className="p-3 flex flex-col gap-2 text-xs">
+        {post.name && <p className="text-neutral-300">{post.name}</p>}
+        {post.email && <p className="text-neutral-500">{post.email}</p>}
+        {post.story && <p className="text-neutral-400">{post.story}</p>}
         <p className={post.usageConsent ? 'text-neutral-600' : 'text-red-400'}>
           {post.usageConsent ? 'Usage rights granted' : 'No usage consent on file'}
         </p>
+        <p className="text-neutral-600">{post.newsletterOptIn ? 'Opted into newsletter' : 'Not opted in'}</p>
         <div className="flex gap-2">{children}</div>
       </div>
     </div>
@@ -51,10 +55,6 @@ export default function CommunityPhotosEditor() {
 
   return (
     <div className="flex flex-col gap-10">
-      <p className="text-xs text-neutral-500 -mt-2">
-        Submitter name/email/story aren't shown here — check the notification email for that.
-      </p>
-
       <div>
         <h3 className="text-white font-semibold mb-3">Pending review ({pending.length})</h3>
         {pending.length === 0 ? (
