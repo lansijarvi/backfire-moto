@@ -171,14 +171,20 @@ exports.notifyCommunityPhotoSubmission = onDocumentCreated(
   { document: 'communityPhotos/{docId}', secrets: [RESEND_API_KEY] },
   async (event) => {
     const data = event.data.data();
-    const mediaType = data.type || data.media?.[0]?.type || 'file';
-    const mediaUrl = data.url || data.media?.[0]?.url;
+    const media = data.media || (data.url ? [{ url: data.url, type: data.type }] : []);
 
     const bodyLines = [
-      `A new ${mediaType} was submitted to Community Photos.`,
+      `Name: ${data.name || '(not given)'}`,
+      `Email: ${data.email || '(not given)'}`,
+      `Newsletter opt-in: ${data.newsletterOptIn ? 'yes' : 'no'}`,
       data.usageConsent ? 'Usage consent: granted' : 'Usage consent: NOT granted',
-      mediaUrl ? `\nPreview: ${mediaUrl}` : '',
-      '\nReview and approve it at https://backfiremoto.com/admin',
+      '',
+      data.story ? `Story:\n${data.story}` : '(no story provided)',
+      '',
+      `${media.length} file${media.length === 1 ? '' : 's'}:`,
+      ...media.map((m) => m.url),
+      '',
+      'Review and approve at https://backfiremoto.com/admin',
     ];
 
     const res = await fetch('https://api.resend.com/emails', {
@@ -190,7 +196,8 @@ exports.notifyCommunityPhotoSubmission = onDocumentCreated(
       body: JSON.stringify({
         from: 'Backfire Moto <notifications@backfiremoto.com>',
         to: ['backfiremoto@gmail.com'],
-        subject: `New community ${mediaType} submission`,
+        reply_to: data.email ? [data.email] : undefined,
+        subject: `New community photo submission${data.name ? ` from ${data.name}` : ''}`,
         text: bodyLines.join('\n'),
       }),
     });

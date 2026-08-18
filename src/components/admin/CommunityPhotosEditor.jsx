@@ -3,19 +3,22 @@ import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } fro
 import { db } from '../../firebase';
 
 function mediaOf(post) {
-  return { url: post.url || post.media?.[0]?.url, type: post.type || post.media?.[0]?.type };
+  return post.media || (post.url ? [{ url: post.url, type: post.type }] : []);
 }
 
 function SubmissionCard({ post, children }) {
-  const { url, type } = mediaOf(post);
+  const media = mediaOf(post);
   return (
     <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface">
-      {url &&
-        (type === 'video' ? (
-          <video src={url} className="w-full aspect-square object-cover" />
-        ) : (
-          <img src={url} alt="" className="w-full aspect-square object-cover" />
-        ))}
+      <div className={`grid gap-0.5 ${media.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {media.map((m, i) =>
+          m.type === 'video' ? (
+            <video key={i} src={m.url} className="w-full aspect-square object-cover" />
+          ) : (
+            <img key={i} src={m.url} alt="" className="w-full aspect-square object-cover" />
+          )
+        )}
+      </div>
       <div className="p-3 flex flex-col gap-2 text-xs">
         <p className={post.usageConsent ? 'text-neutral-600' : 'text-red-400'}>
           {post.usageConsent ? 'Usage rights granted' : 'No usage consent on file'}
@@ -48,6 +51,10 @@ export default function CommunityPhotosEditor() {
 
   return (
     <div className="flex flex-col gap-10">
+      <p className="text-xs text-neutral-500 -mt-2">
+        Submitter name/email/story aren't shown here — check the notification email for that.
+      </p>
+
       <div>
         <h3 className="text-white font-semibold mb-3">Pending review ({pending.length})</h3>
         {pending.length === 0 ? (

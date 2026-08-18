@@ -1,35 +1,58 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
+import { MAILCHIMP_ACTION, MAILCHIMP_HONEYPOT_NAME } from '../mailchimpConfig';
 
-function mediaOf(post) {
-  return { url: post.url || post.media?.[0]?.url, type: post.type || post.media?.[0]?.type };
-}
+const MAX_FILES = 5;
 
 export default function Community() {
-  const [photos, setPhotos] = useState([]);
+  const [tiles, setTiles] = useState([]); // flattened { url, type } across all approved submissions
   const [loading, setLoading] = useState(true);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [story, setStory] = useState('');
+  const [newsletterOptIn, setNewsletterOptIn] = useState(true);
   const [usageConsent, setUsageConsent] = useState(false);
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [lightbox, setLightbox] = useState(null);
 
+  const mailchimpFormRef = useRef(null);
+  const mailchimpEmailRef = useRef(null);
+
   useEffect(() => {
     getDocs(
       query(collection(db, 'communityPhotos'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'))
     ).then((snap) => {
-      setPhotos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const flat = snap.docs.flatMap((d) => {
+        const data = d.data();
+        const media = data.media || (data.url ? [{ url: data.url, type: data.type }] : []);
+        return media.map((m) => ({ ...m, id: d.id }));
+      });
+      setTiles(flat);
       setLoading(false);
     });
   }, []);
 
+  function handleFileChange(e) {
+    const chosen = Array.from(e.target.files || []);
+    if (chosen.length > MAX_FILES) {
+      setError(`Choose up to ${MAX_FILES} photos/videos.`);
+      setFiles(chosen.slice(0, MAX_FILES));
+    } else {
+      setError('');
+      setFiles(chosen);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!file) {
-      setError('Choose a photo or video.');
+    if (files.length === 0) {
+      setError('Add at least one photo or video.');
       return;
     }
     if (!usageConsent) {
@@ -39,18 +62,30 @@ export default function Community() {
     setUploading(true);
     setError('');
     try {
-      const type = file.type.startsWith('video') ? 'video' : 'image';
-      const fileRef = ref(storage, `backfire/community/${Date.now()}-${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
+      const media = [];
+      for (const file of files) {
+        const type = file.type.startsWith('video') ? 'video' : 'image';
+        const fileRef = ref(storage, `backfire/community/${Date.now()}-${file.name}`);
+        await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(fileRef);
+        media.push({ url, type });
+      }
 
       await addDoc(collection(db, 'communityPhotos'), {
-        url,
-        type,
+        name: name.trim(),
+        email: email.trim(),
+        story: story.trim(),
+        newsletterOptIn,
         usageConsent,
+        media,
         status: 'pending',
         createdAt: serverTimestamp(),
       });
+
+      if (newsletterOptIn && email.trim()) {
+        mailchimpEmailRef.current.value = email.trim();
+        mailchimpFormRef.current.submit();
+      }
 
       setSubmitted(true);
     } catch {
@@ -63,9 +98,12 @@ export default function Community() {
   return (
     <div className="flex-1 max-w-5xl mx-auto px-4 py-16 w-full">
       <h1 className="font-heading text-4xl text-white text-center mb-4">Community Photos</h1>
-      <p className="text-neutral-400 text-center max-w-lg mx-auto mb-10">
+      <p className="text-neutral-400 text-center max-w-lg mx-auto mb-2">
         Your bike, your rig at the event, rocking a Backfire shirt — share it here. We check
         every submission before it goes public.
+      </p>
+      <p className="text-accent text-center max-w-lg mx-auto mb-10 text-sm">
+        We might feature your bike (and your story) in the newsletter!
       </p>
 
       <form
@@ -78,15 +116,35 @@ export default function Community() {
           </p>
         ) : (
           <>
-            <label className="bg-accent text-white text-sm font-semibold uppercase tracking-wide px-4 py-3 rounded text-center cursor-pointer hover:brightness-110 transition">
-              {file ? file.name : 'Choose Photo or Video'}
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name or @handle (optional)"
+              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+            />
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email"
+              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+            />
+            <textarea
+              value={story}
+              onChange={(e) => setStory(e.target.value)}
+              placeholder="Tell us the story behind it (optional)"
+              rows={3}
+              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+            />
+            <label className="flex items-start gap-2 text-xs text-neutral-400">
               <input
-                type="file"
-                accept="image/*,video/*"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                disabled={uploading}
-                className="hidden"
+                type="checkbox"
+                checked={newsletterOptIn}
+                onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                className="mt-0.5"
               />
+              Sign me up for the Backfire Moto newsletter
             </label>
             <label className="flex items-start gap-2 text-xs text-neutral-400">
               <input
@@ -98,6 +156,18 @@ export default function Community() {
               I have the right to share this and give Backfire Moto permission to use it on
               our website, social media, newsletter, and event promotions.
             </label>
+            <label className="bg-accent text-white text-sm font-semibold uppercase tracking-wide px-4 py-3 rounded text-center cursor-pointer hover:brightness-110 transition">
+              {files.length > 0 ? `${files.length} file${files.length > 1 ? 's' : ''} chosen` : 'Choose Photos/Videos'}
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                onChange={handleFileChange}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            <p className="text-xs text-neutral-500 text-center">Up to {MAX_FILES} photos or short videos</p>
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
             <button
               type="submit"
@@ -110,29 +180,32 @@ export default function Community() {
         )}
       </form>
 
+      {/* Hidden Mailchimp opt-in form, submitted programmatically when checked above */}
+      <form ref={mailchimpFormRef} action={MAILCHIMP_ACTION} method="post" target="mc-community-iframe" className="hidden">
+        <input ref={mailchimpEmailRef} type="email" name="EMAIL" />
+        <input type="text" name={MAILCHIMP_HONEYPOT_NAME} defaultValue="" />
+      </form>
+      <iframe name="mc-community-iframe" title="mailchimp" className="hidden" />
+
       {loading ? (
         <p className="text-center text-neutral-500">Loading…</p>
-      ) : photos.length === 0 ? (
+      ) : tiles.length === 0 ? (
         <p className="text-center text-neutral-500">No community photos yet — be the first!</p>
       ) : (
         <div className="columns-2 md:columns-3 gap-3 space-y-3">
-          {photos.map((post) => {
-            const { url, type } = mediaOf(post);
-            if (!url) return null;
-            return (
-              <button
-                key={post.id}
-                onClick={() => setLightbox({ url, type })}
-                className="block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface"
-              >
-                {type === 'video' ? (
-                  <video src={url} className="w-full" muted />
-                ) : (
-                  <img src={url} alt="" className="w-full" />
-                )}
-              </button>
-            );
-          })}
+          {tiles.map((tile, i) => (
+            <button
+              key={`${tile.id}-${i}`}
+              onClick={() => setLightbox(tile)}
+              className="block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface"
+            >
+              {tile.type === 'video' ? (
+                <video src={tile.url} className="w-full" muted />
+              ) : (
+                <img src={tile.url} alt="" className="w-full" />
+              )}
+            </button>
+          ))}
         </div>
       )}
 
