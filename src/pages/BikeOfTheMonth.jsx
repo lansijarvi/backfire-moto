@@ -23,7 +23,9 @@ export default function BikeOfTheMonth() {
       {loading ? (
         <p className="text-neutral-500">Loading…</p>
       ) : !data ? (
-        <p className="text-neutral-500">Check back soon.</p>
+        <p className="text-neutral-400 max-w-md">
+          TBD at the next Backfire Motorcycle Night, Wednesday August 19th, 2026. Good luck!
+        </p>
       ) : (
         <>
           {data.title && <h2 className="font-heading text-3xl text-accent">{data.title}</h2>}
