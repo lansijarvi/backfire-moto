@@ -49,8 +49,10 @@ export default function Donate() {
     <div className="flex-1 max-w-lg mx-auto px-4 py-16 w-full flex flex-col items-center text-center gap-8">
       <div>
         <h1 className="font-heading text-4xl text-white">Support Backfire Moto</h1>
-        <p className="mt-2 text-neutral-400">
-          Grabbing food tonight? Donations help keep the events, food, and community going.
+        <p className="mt-3 text-neutral-400">
+          Backfire Motorcycle Night takes a lot of work to organize and keep running — we cover
+          the cost of the food and pay the bands out of pocket. If you're feeling it, a donation
+          helps us cover those costs and keep bringing it back. Every bit is appreciated.
         </p>
       </div>
 
