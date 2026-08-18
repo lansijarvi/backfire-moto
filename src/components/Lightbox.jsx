@@ -25,14 +25,14 @@ export default function Lightbox({ media, onClose }) {
           src={media.url}
           controls
           autoPlay
-          className="max-w-full max-h-full rounded-lg"
+          className="max-w-[90vw] max-h-[90vh] w-auto h-auto object-contain rounded-lg"
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
         <img
           src={media.url}
           alt=""
-          className="max-w-full max-h-full rounded-lg"
+          className="max-w-[90vw] max-h-[90vh] w-auto h-auto object-contain rounded-lg"
           onClick={(e) => e.stopPropagation()}
         />
       )}

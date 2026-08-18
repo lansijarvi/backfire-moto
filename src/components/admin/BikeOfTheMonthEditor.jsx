@@ -92,10 +92,15 @@ export default function BikeOfTheMonthEditor() {
       <div className="flex flex-col gap-2">
         <span className="text-sm text-neutral-400">Photos ({form.images.length}/{MAX_IMAGES})</span>
         {form.images.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {form.images.map((url, i) => (
               <div key={i} className="relative">
-                <img src={url} alt="" className="w-full aspect-square object-cover rounded border border-neutral-800" />
+                <img
+                  src={url}
+                  alt=""
+                  loading="lazy"
+                  className="w-full aspect-square object-cover rounded border border-neutral-800"
+                />
                 <button
                   type="button"
                   onClick={() => removeImage(i)}

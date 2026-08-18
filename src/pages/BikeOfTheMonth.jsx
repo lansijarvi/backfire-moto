@@ -19,18 +19,20 @@ export default function BikeOfTheMonth() {
 
   return (
     <div className="flex-1 max-w-5xl mx-auto px-4 py-16 w-full flex flex-col items-center text-center gap-6">
-      <h1 className="font-heading text-4xl text-white">Bike of the Month</h1>
+      <h1 className="font-heading text-3xl sm:text-4xl text-white">Bike of the Month</h1>
 
       {loading ? (
         <p className="text-neutral-500">Loading…</p>
       ) : !data ? (
-        <p className="text-neutral-400 max-w-md">
+        <p className="text-neutral-400 max-w-md px-2">
           TBD at the next Backfire Motorcycle Night, Wednesday August 19th, 2026. Good luck!
         </p>
       ) : (
         <>
-          {data.title && <h2 className="font-heading text-3xl text-accent">{data.title}</h2>}
-          {data.subject && <p className="text-neutral-400 max-w-xl">{data.subject}</p>}
+          {data.title && (
+            <h2 className="font-heading text-2xl sm:text-3xl text-accent break-words px-2">{data.title}</h2>
+          )}
+          {data.subject && <p className="text-neutral-400 max-w-xl px-2">{data.subject}</p>}
 
           {images.length > 0 && (
             <div className="columns-2 md:columns-3 gap-3 space-y-3 w-full mt-4">
