@@ -13,7 +13,7 @@ function ProductCard({ product }) {
   return (
     <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface flex flex-col">
       {product.imageUrl && (
-        <img src={product.imageUrl} alt={product.name} className="w-full aspect-square object-cover" />
+        <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full aspect-square object-cover" />
       )}
       <div className="p-4 flex flex-col gap-2 flex-1">
         <h2 className="text-white font-semibold">{product.name}</h2>

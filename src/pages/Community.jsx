@@ -3,6 +3,8 @@ import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } f
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { MAILCHIMP_ACTION, MAILCHIMP_HONEYPOT_NAME } from '../mailchimpConfig';
+import { compressImage } from '../lib/imageUpload';
+import Lightbox from '../components/Lightbox';
 
 const MAX_FILES = 5;
 
@@ -68,8 +70,9 @@ export default function Community() {
       const media = [];
       for (const file of files) {
         const type = file.type.startsWith('video') ? 'video' : 'image';
+        const uploadFile = type === 'image' ? await compressImage(file) : file;
         const fileRef = ref(storage, `backfire/community/${Date.now()}-${file.name}`);
-        await uploadBytes(fileRef, file);
+        await uploadBytes(fileRef, uploadFile);
         const url = await getDownloadURL(fileRef);
         media.push({ url, type });
       }
@@ -205,43 +208,14 @@ export default function Community() {
               {tile.type === 'video' ? (
                 <video src={tile.url} className="w-full" muted />
               ) : (
-                <img src={tile.url} alt="" className="w-full" />
+                <img src={tile.url} alt="" loading="lazy" className="w-full" />
               )}
             </button>
           ))}
         </div>
       )}
 
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            onClick={() => setLightbox(null)}
-            aria-label="Close"
-            className="absolute top-4 right-4 text-white text-4xl leading-none hover:text-accent"
-          >
-            &times;
-          </button>
-          {lightbox.type === 'video' ? (
-            <video
-              src={lightbox.url}
-              controls
-              autoPlay
-              className="max-w-full max-h-full rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <img
-              src={lightbox.url}
-              alt=""
-              className="max-w-full max-h-full rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
-        </div>
-      )}
+      <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function Gallery() {
               {item.type === 'video' ? (
                 <video src={item.url} controls className="w-full" />
               ) : (
-                <img src={item.url} alt={item.caption || ''} className="w-full" />
+                <img src={item.url} alt={item.caption || ''} loading="lazy" className="w-full" />
               )}
               {item.caption && (
                 <p className="text-xs text-neutral-500 px-3 py-2">{item.caption}</p>

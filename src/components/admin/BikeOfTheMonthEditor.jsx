@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
+import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 
 const MAX_IMAGES = 5;
 const EMPTY = { title: '', subject: '', images: [] };
@@ -36,8 +37,9 @@ export default function BikeOfTheMonthEditor() {
       const toUpload = files.slice(0, room);
       const urls = [];
       for (const file of toUpload) {
+        const compressed = await compressImage(file);
         const fileRef = ref(storage, `backfire/bike-of-the-month/${Date.now()}-${file.name}`);
-        await uploadBytes(fileRef, file);
+        await uploadBytes(fileRef, compressed);
         urls.push(await getDownloadURL(fileRef));
       }
       setForm((f) => ({ ...f, images: [...f.images, ...urls] }));
@@ -48,6 +50,7 @@ export default function BikeOfTheMonthEditor() {
   }
 
   function removeImage(index) {
+    deleteStorageFileByUrl(storage, form.images[index]);
     setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
   }
 

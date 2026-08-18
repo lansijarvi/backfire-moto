@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, storage } from '../../firebase';
+import { deleteStorageFileByUrl } from '../../lib/imageUpload';
+import Lightbox from '../Lightbox';
 
 function mediaOf(post) {
   return post.media || (post.url ? [{ url: post.url, type: post.type }] : []);
@@ -37,6 +39,7 @@ function MediaGrid({ media, selected, onToggle, onOpenMedia }) {
               <img
                 src={m.url}
                 alt=""
+                loading="lazy"
                 onClick={() => onOpenMedia(m)}
                 className="w-full aspect-square object-cover cursor-pointer"
               />
@@ -187,8 +190,10 @@ export default function CommunityPhotosEditor() {
     await updateDoc(doc(db, 'communityPhotos', post.id), { includedMedia: includedUrlsFor(post) });
   }
 
-  async function reject(id) {
-    await deleteDoc(doc(db, 'communityPhotos', id));
+  async function reject(post) {
+    const media = mediaOf(post);
+    await Promise.all(media.map((m) => deleteStorageFileByUrl(storage, m.url)));
+    await deleteDoc(doc(db, 'communityPhotos', post.id));
   }
 
   return (
@@ -212,7 +217,7 @@ export default function CommunityPhotosEditor() {
                 onToggle={(i) => toggleSelection(post.id, i)}
                 onOpenMedia={setLightbox}
                 onApprove={() => approve(post)}
-                onReject={() => reject(post.id)}
+                onReject={() => reject(post)}
               />
             ))}
           </div>
@@ -233,7 +238,7 @@ export default function CommunityPhotosEditor() {
                 onToggle={(i) => toggleSelection(post.id, i)}
                 onOpenMedia={setLightbox}
                 onUpdate={() => updateIncluded(post)}
-                onReject={() => reject(post.id)}
+                onReject={() => reject(post)}
                 dirty={isDirty(post)}
               />
             ))}
@@ -241,36 +246,7 @@ export default function CommunityPhotosEditor() {
         )}
       </div>
 
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            onClick={() => setLightbox(null)}
-            aria-label="Close"
-            className="absolute top-4 right-4 text-white text-4xl leading-none hover:text-accent"
-          >
-            &times;
-          </button>
-          {lightbox.type === 'video' ? (
-            <video
-              src={lightbox.url}
-              controls
-              autoPlay
-              className="max-w-full max-h-full rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <img
-              src={lightbox.url}
-              alt=""
-              className="max-w-full max-h-full rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
-        </div>
-      )}
+      <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
     </div>
   );
 }

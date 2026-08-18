@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import Lightbox from '../components/Lightbox';
 
 export default function BikeOfTheMonth() {
   const [data, setData] = useState(null);
@@ -36,10 +37,10 @@ export default function BikeOfTheMonth() {
               {images.map((url, i) => (
                 <button
                   key={i}
-                  onClick={() => setLightbox(url)}
+                  onClick={() => setLightbox({ url, type: 'image' })}
                   className="block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface"
                 >
-                  <img src={url} alt="" className="w-full" />
+                  <img src={url} alt="" loading="lazy" className="w-full" />
                 </button>
               ))}
             </div>
@@ -47,26 +48,7 @@ export default function BikeOfTheMonth() {
         </>
       )}
 
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            onClick={() => setLightbox(null)}
-            aria-label="Close"
-            className="absolute top-4 right-4 text-white text-4xl leading-none hover:text-accent"
-          >
-            &times;
-          </button>
-          <img
-            src={lightbox}
-            alt=""
-            className="max-w-full max-h-full rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
+import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 
 export default function GalleryEditor() {
   const [items, setItems] = useState([]);
@@ -28,8 +29,9 @@ export default function GalleryEditor() {
     if (!file) return;
     setUploading(true);
     const type = file.type.startsWith('video') ? 'video' : 'photo';
+    const uploadFile = type === 'photo' ? await compressImage(file) : file;
     const fileRef = ref(storage, `backfire/gallery/${Date.now()}-${file.name}`);
-    await uploadBytes(fileRef, file);
+    await uploadBytes(fileRef, uploadFile);
     const url = await getDownloadURL(fileRef);
     await addDoc(collection(db, 'gallery'), {
       url,
@@ -42,8 +44,9 @@ export default function GalleryEditor() {
     e.target.value = '';
   }
 
-  async function handleDelete(id) {
-    await deleteDoc(doc(db, 'gallery', id));
+  async function handleDelete(item) {
+    await deleteStorageFileByUrl(storage, item.url);
+    await deleteDoc(doc(db, 'gallery', item.id));
   }
 
   return (
@@ -70,10 +73,15 @@ export default function GalleryEditor() {
             {item.type === 'video' ? (
               <video src={item.url} className="w-full aspect-square object-cover rounded border border-neutral-800" />
             ) : (
-              <img src={item.url} alt="" className="w-full aspect-square object-cover rounded border border-neutral-800" />
+              <img
+                src={item.url}
+                alt=""
+                loading="lazy"
+                className="w-full aspect-square object-cover rounded border border-neutral-800"
+              />
             )}
             <button
-              onClick={() => handleDelete(item.id)}
+              onClick={() => handleDelete(item)}
               className="absolute top-1 right-1 bg-black/70 text-red-400 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
             >
               Delete

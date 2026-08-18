@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
+import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 
 const EMPTY = { name: '', price: '', sizes: '', imageUrl: '', active: true };
 
@@ -43,11 +44,14 @@ export default function ProductsEditor() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
+    const previousUrl = form.imageUrl;
+    const compressed = await compressImage(file);
     const fileRef = ref(storage, `backfire/products/${Date.now()}-${file.name}`);
-    await uploadBytes(fileRef, file);
+    await uploadBytes(fileRef, compressed);
     const url = await getDownloadURL(fileRef);
     update('imageUrl', url);
     setUploading(false);
+    if (previousUrl) deleteStorageFileByUrl(storage, previousUrl);
   }
 
   async function handleSubmit(e) {
@@ -66,9 +70,10 @@ export default function ProductsEditor() {
     }
   }
 
-  async function handleDelete(id) {
-    await deleteDoc(doc(db, 'products', id));
-    if (editingId === id) resetForm();
+  async function handleDelete(product) {
+    if (product.imageUrl) await deleteStorageFileByUrl(storage, product.imageUrl);
+    await deleteDoc(doc(db, 'products', product.id));
+    if (editingId === product.id) resetForm();
   }
 
   return (
@@ -145,13 +150,13 @@ export default function ProductsEditor() {
         <div className="flex flex-col gap-2">
           {products.map((p) => (
             <div key={p.id} className="flex items-center gap-3 border border-neutral-800 rounded px-3 py-2">
-              {p.imageUrl && <img src={p.imageUrl} alt="" className="w-10 h-10 object-cover rounded" />}
+              {p.imageUrl && <img src={p.imageUrl} alt="" loading="lazy" className="w-10 h-10 object-cover rounded" />}
               <div className="flex-1 text-sm">
                 <p className="text-white">{p.name} {!p.active && <span className="text-neutral-600">(hidden)</span>}</p>
                 <p className="text-neutral-500">${p.price}</p>
               </div>
               <button onClick={() => startEdit(p)} className="text-xs text-neutral-400 hover:text-white">Edit</button>
-              <button onClick={() => handleDelete(p.id)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
+              <button onClick={() => handleDelete(p)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
             </div>
           ))}
         </div>

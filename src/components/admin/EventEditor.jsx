@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
+import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 
 const EMPTY = { title: '', dateText: '', description: '', flyerImageUrl: '', ctaText: '', ctaUrl: '' };
 
@@ -25,11 +26,14 @@ export default function EventEditor() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
+    const previousUrl = form.flyerImageUrl;
+    const compressed = await compressImage(file, 2000);
     const fileRef = ref(storage, `backfire/hero/flyer-${Date.now()}-${file.name}`);
-    await uploadBytes(fileRef, file);
+    await uploadBytes(fileRef, compressed);
     const url = await getDownloadURL(fileRef);
     update('flyerImageUrl', url);
     setUploading(false);
+    if (previousUrl) deleteStorageFileByUrl(storage, previousUrl);
   }
 
   async function handleSave(e) {
