@@ -29,5 +29,13 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if false;
     }
+
+    // Community photo submissions — anyone can submit (goes in as 'pending'), but only
+    // approved ones are publicly readable; admin sees/moderates everything.
+    match /communityPhotos/{docId} {
+      allow read: if resource.data.status == 'approved' || isAdmin();
+      allow create: if request.resource.data.status == 'pending';
+      allow update, delete: if isAdmin();
+    }
   }
 }

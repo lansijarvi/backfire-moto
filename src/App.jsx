@@ -15,6 +15,7 @@ import CheckoutCancel from './pages/CheckoutCancel';
 import Donate from './pages/Donate';
 import DonateSuccess from './pages/DonateSuccess';
 import DonateDisplay from './pages/DonateDisplay';
+import Community from './pages/Community';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/community" element={<Community />} />
           <Route path="/login" element={<Login />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />

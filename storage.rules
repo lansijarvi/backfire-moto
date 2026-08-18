@@ -21,6 +21,13 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
     }
+    // Community photo submissions — anyone can upload (moderation happens in Firestore,
+    // not here), capped at 20MB and images only.
+    match /backfire/community/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
     match /{allPaths=**} {
       allow read, write: if false;
     }
