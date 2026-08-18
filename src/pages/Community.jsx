@@ -14,6 +14,7 @@ export default function Community() {
   const [email, setEmail] = useState('');
   const [story, setStory] = useState('');
   const [newsletterOptIn, setNewsletterOptIn] = useState(true);
+  const [usageConsent, setUsageConsent] = useState(false);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -65,6 +66,7 @@ export default function Community() {
         email: email.trim(),
         story: story.trim(),
         newsletterOptIn,
+        usageConsent,
         media,
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -125,6 +127,17 @@ export default function Community() {
               rows={3}
               className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
             />
+            <label className="flex items-start gap-2 text-xs text-neutral-400">
+              <input
+                type="checkbox"
+                required
+                checked={usageConsent}
+                onChange={(e) => setUsageConsent(e.target.checked)}
+                className="mt-0.5"
+              />
+              I have the right to share this and give Backfire Moto permission to use it on
+              our website, social media, newsletter, and event promotions.
+            </label>
             <label className="flex items-start gap-2 text-xs text-neutral-400">
               <input
                 type="checkbox"
