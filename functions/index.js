@@ -80,6 +80,40 @@ exports.createCheckoutSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (
     ],
     success_url: `${origin}${basePath}checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}${basePath}checkout/cancel`,
+    metadata: { type: 'shop' },
+  });
+
+  return { url: session.url };
+});
+
+exports.createDonationCheckoutSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (request) => {
+  const stripe = require('stripe')(STRIPE_SECRET_KEY.value());
+
+  const amount = Number(request.data?.amount);
+  if (!Number.isFinite(amount) || amount < 1 || amount > 5000) {
+    throw new HttpsError('invalid-argument', 'Enter an amount between $1 and $5000.');
+  }
+
+  const basePath = ALLOWED_BASE_PATHS.includes(request.data?.basePath)
+    ? request.data.basePath
+    : '/backfire-moto/';
+  const origin = request.rawRequest.headers.origin || 'https://backfiremoto.com';
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: { name: 'Donation to Backfire Moto' },
+          unit_amount: Math.round(amount * 100),
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: `${origin}${basePath}donate/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}${basePath}donate`,
+    metadata: { type: 'donation' },
   });
 
   return { url: session.url };
@@ -111,6 +145,7 @@ exports.stripeWebhook = onRequest(
         .collection('orders')
         .doc(session.id)
         .set({
+          type: session.metadata?.type || 'shop',
           email: session.customer_details?.email || null,
           amountTotal: session.amount_total,
           currency: session.currency,

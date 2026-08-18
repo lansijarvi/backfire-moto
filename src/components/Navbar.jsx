@@ -7,6 +7,7 @@ const LINKS = [
   { to: '/', label: 'Home', end: true },
   { to: '/shop', label: 'Shop' },
   { to: '/gallery', label: 'Gallery' },
+  { to: '/donate', label: 'Donate' },
 ];
 
 export default function Navbar() {

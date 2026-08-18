@@ -12,6 +12,9 @@ import Login from './pages/Login';
 import Admin from './pages/Admin';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import CheckoutCancel from './pages/CheckoutCancel';
+import Donate from './pages/Donate';
+import DonateSuccess from './pages/DonateSuccess';
+import DonateDisplay from './pages/DonateDisplay';
 
 function App() {
   return (
@@ -25,6 +28,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+          <Route path="/donate" element={<Donate />} />
+          <Route path="/donate/success" element={<DonateSuccess />} />
+          <Route path="/donate/display" element={<DonateDisplay />} />
           <Route
             path="/admin"
             element={
