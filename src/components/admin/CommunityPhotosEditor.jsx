@@ -6,16 +6,27 @@ function mediaOf(post) {
   return post.media || (post.url ? [{ url: post.url, type: post.type }] : []);
 }
 
-function SubmissionCard({ post, children }) {
+function SubmissionCard({ post, onOpenMedia, children }) {
   const media = mediaOf(post);
   return (
     <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface">
       <div className={`grid gap-0.5 ${media.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {media.map((m, i) =>
           m.type === 'video' ? (
-            <video key={i} src={m.url} className="w-full aspect-square object-cover" />
+            <video
+              key={i}
+              src={m.url}
+              onClick={() => onOpenMedia(m)}
+              className="w-full aspect-square object-cover cursor-pointer"
+            />
           ) : (
-            <img key={i} src={m.url} alt="" className="w-full aspect-square object-cover" />
+            <img
+              key={i}
+              src={m.url}
+              alt=""
+              onClick={() => onOpenMedia(m)}
+              className="w-full aspect-square object-cover cursor-pointer"
+            />
           )
         )}
       </div>
@@ -35,6 +46,7 @@ function SubmissionCard({ post, children }) {
 
 export default function CommunityPhotosEditor() {
   const [posts, setPosts] = useState([]);
+  const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
     return onSnapshot(query(collection(db, 'communityPhotos'), orderBy('createdAt', 'desc')), (snap) => {
@@ -55,6 +67,8 @@ export default function CommunityPhotosEditor() {
 
   return (
     <div className="flex flex-col gap-10">
+      <p className="text-xs text-neutral-500 -mt-2">Click any photo/video to view it full-size (right-click to copy).</p>
+
       <div>
         <h3 className="text-white font-semibold mb-3">Pending review ({pending.length})</h3>
         {pending.length === 0 ? (
@@ -62,7 +76,7 @@ export default function CommunityPhotosEditor() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {pending.map((post) => (
-              <SubmissionCard key={post.id} post={post}>
+              <SubmissionCard key={post.id} post={post} onOpenMedia={setLightbox}>
                 <button
                   onClick={() => approve(post.id)}
                   className="flex-1 bg-accent text-white text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:brightness-110 transition"
@@ -88,7 +102,7 @@ export default function CommunityPhotosEditor() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {approved.map((post) => (
-              <SubmissionCard key={post.id} post={post}>
+              <SubmissionCard key={post.id} post={post} onOpenMedia={setLightbox}>
                 <button
                   onClick={() => reject(post.id)}
                   className="flex-1 border border-red-900 text-red-400 text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:bg-red-950 transition"
@@ -100,6 +114,37 @@ export default function CommunityPhotosEditor() {
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={() => setLightbox(null)}
+            aria-label="Close"
+            className="absolute top-4 right-4 text-white text-4xl leading-none hover:text-accent"
+          >
+            &times;
+          </button>
+          {lightbox.type === 'video' ? (
+            <video
+              src={lightbox.url}
+              controls
+              autoPlay
+              className="max-w-full max-h-full rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img
+              src={lightbox.url}
+              alt=""
+              className="max-w-full max-h-full rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
