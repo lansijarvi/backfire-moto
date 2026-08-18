@@ -20,50 +20,54 @@ function InfoBlock({ post }) {
   );
 }
 
+function MediaGrid({ media, selected, onToggle, onOpenMedia }) {
+  return (
+    <div className={`grid gap-0.5 ${media.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      {media.map((m, i) => {
+        const isSelected = selected?.has(i);
+        return (
+          <div key={i} className="relative">
+            {m.type === 'video' ? (
+              <video
+                src={m.url}
+                onClick={() => onOpenMedia(m)}
+                className="w-full aspect-square object-cover cursor-pointer"
+              />
+            ) : (
+              <img
+                src={m.url}
+                alt=""
+                onClick={() => onOpenMedia(m)}
+                className="w-full aspect-square object-cover cursor-pointer"
+              />
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(i);
+              }}
+              aria-label={isSelected ? 'Deselect' : 'Select'}
+              className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition ${
+                isSelected ? 'bg-accent border-accent text-white' : 'bg-black/60 border-white/70 text-transparent'
+              }`}
+            >
+              ✓
+            </button>
+            {!isSelected && <div className="absolute inset-0 bg-black/60 pointer-events-none" />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function PendingCard({ post, selected, onToggle, onOpenMedia, onApprove, onReject }) {
   const media = mediaOf(post);
   const selectedCount = selected?.size || 0;
 
   return (
     <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface">
-      <div className={`grid gap-0.5 ${media.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {media.map((m, i) => {
-          const isSelected = selected?.has(i);
-          return (
-            <div key={i} className="relative">
-              {m.type === 'video' ? (
-                <video
-                  src={m.url}
-                  onClick={() => onOpenMedia(m)}
-                  className="w-full aspect-square object-cover cursor-pointer"
-                />
-              ) : (
-                <img
-                  src={m.url}
-                  alt=""
-                  onClick={() => onOpenMedia(m)}
-                  className="w-full aspect-square object-cover cursor-pointer"
-                />
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle(i);
-                }}
-                aria-label={isSelected ? 'Deselect' : 'Select'}
-                className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition ${
-                  isSelected
-                    ? 'bg-accent border-accent text-white'
-                    : 'bg-black/60 border-white/70 text-transparent'
-                }`}
-              >
-                ✓
-              </button>
-              {!isSelected && <div className="absolute inset-0 bg-black/60 pointer-events-none" />}
-            </div>
-          );
-        })}
-      </div>
+      <MediaGrid media={media} selected={selected} onToggle={onToggle} onOpenMedia={onOpenMedia} />
       <div className="p-3 flex flex-col gap-2 text-xs">
         <InfoBlock post={post} />
         <p className="text-neutral-500">
@@ -89,40 +93,32 @@ function PendingCard({ post, selected, onToggle, onOpenMedia, onApprove, onRejec
   );
 }
 
-function ApprovedCard({ post, onOpenMedia, onReject }) {
-  const allMedia = mediaOf(post);
-  const media = post.includedMedia ? allMedia.filter((m) => post.includedMedia.includes(m.url)) : allMedia;
+function ApprovedCard({ post, selected, onToggle, onOpenMedia, onUpdate, onReject, dirty }) {
+  const media = mediaOf(post);
+  const selectedCount = selected?.size || 0;
 
   return (
     <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface">
-      <div className={`grid gap-0.5 ${media.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {media.map((m, i) =>
-          m.type === 'video' ? (
-            <video
-              key={i}
-              src={m.url}
-              onClick={() => onOpenMedia(m)}
-              className="w-full aspect-square object-cover cursor-pointer"
-            />
-          ) : (
-            <img
-              key={i}
-              src={m.url}
-              alt=""
-              onClick={() => onOpenMedia(m)}
-              className="w-full aspect-square object-cover cursor-pointer"
-            />
-          )
-        )}
-      </div>
+      <MediaGrid media={media} selected={selected} onToggle={onToggle} onOpenMedia={onOpenMedia} />
       <div className="p-3 flex flex-col gap-2 text-xs">
         <InfoBlock post={post} />
-        <button
-          onClick={onReject}
-          className="border border-red-900 text-red-400 text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:bg-red-950 transition"
-        >
-          Remove
-        </button>
+        <p className="text-neutral-500">{selectedCount} of {media.length} showing publicly</p>
+        <div className="flex gap-2">
+          {dirty && (
+            <button
+              onClick={onUpdate}
+              className="flex-1 bg-accent text-white text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:brightness-110 transition"
+            >
+              Update
+            </button>
+          )}
+          <button
+            onClick={onReject}
+            className="flex-1 border border-red-900 text-red-400 text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:bg-red-950 transition"
+          >
+            Remove All
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -140,8 +136,16 @@ export default function CommunityPhotosEditor() {
       setSelections((prev) => {
         const updated = { ...prev };
         next.forEach((p) => {
-          if (p.status === 'pending' && !updated[p.id]) {
-            updated[p.id] = new Set(mediaOf(p).map((_, i) => i));
+          if (updated[p.id]) return;
+          const media = mediaOf(p);
+          if (p.status === 'approved' && p.includedMedia) {
+            const set = new Set();
+            media.forEach((m, i) => {
+              if (p.includedMedia.includes(m.url)) set.add(i);
+            });
+            updated[p.id] = set;
+          } else {
+            updated[p.id] = new Set(media.map((_, i) => i));
           }
         });
         return updated;
@@ -161,12 +165,26 @@ export default function CommunityPhotosEditor() {
     });
   }
 
-  async function approve(post) {
+  function includedUrlsFor(post) {
     const media = mediaOf(post);
     const selected = selections[post.id] || new Set(media.map((_, i) => i));
-    const includedMedia = media.filter((_, i) => selected.has(i)).map((m) => m.url);
+    return media.filter((_, i) => selected.has(i)).map((m) => m.url);
+  }
+
+  function isDirty(post) {
+    const current = includedUrlsFor(post);
+    const saved = post.includedMedia || mediaOf(post).map((m) => m.url);
+    return current.length !== saved.length || current.some((u) => !saved.includes(u));
+  }
+
+  async function approve(post) {
+    const includedMedia = includedUrlsFor(post);
     if (includedMedia.length === 0) return;
     await updateDoc(doc(db, 'communityPhotos', post.id), { status: 'approved', includedMedia });
+  }
+
+  async function updateIncluded(post) {
+    await updateDoc(doc(db, 'communityPhotos', post.id), { includedMedia: includedUrlsFor(post) });
   }
 
   async function reject(id) {
@@ -176,8 +194,8 @@ export default function CommunityPhotosEditor() {
   return (
     <div className="flex flex-col gap-10">
       <p className="text-xs text-neutral-500 -mt-2">
-        Click any photo/video to view it full-size (right-click to copy). Tap the checkmark on
-        a photo to leave it out of the public page.
+        Click any photo/video to view it full-size (right-click to copy). Tap the checkmark to
+        include/exclude it from the public page.
       </p>
 
       <div>
@@ -208,7 +226,16 @@ export default function CommunityPhotosEditor() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {approved.map((post) => (
-              <ApprovedCard key={post.id} post={post} onOpenMedia={setLightbox} onReject={() => reject(post.id)} />
+              <ApprovedCard
+                key={post.id}
+                post={post}
+                selected={selections[post.id]}
+                onToggle={(i) => toggleSelection(post.id, i)}
+                onOpenMedia={setLightbox}
+                onUpdate={() => updateIncluded(post)}
+                onReject={() => reject(post.id)}
+                dirty={isDirty(post)}
+              />
             ))}
           </div>
         )}
