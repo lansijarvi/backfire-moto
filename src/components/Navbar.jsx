@@ -8,6 +8,7 @@ import { ADMIN_UID } from '../adminConfig';
 
 const LINKS = [
   { to: '/', label: 'Home', end: true },
+  { to: '/bike-of-the-month', label: 'Bike of the Month' },
   { to: '/community', label: 'Community' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/shop', label: 'Shop' },

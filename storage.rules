@@ -21,6 +21,10 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
     }
+    match /backfire/bike-of-the-month/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+    }
     // Community photo/video submissions — anyone can upload (moderation happens in
     // Firestore, not here), capped at 50MB, images or short videos only.
     match /backfire/community/{allPaths=**} {
