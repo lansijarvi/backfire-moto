@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Lightbox from '../components/Lightbox';
@@ -65,6 +66,14 @@ export default function BikeOfTheMonth() {
           )}
         </>
       )}
+
+      <p className="text-sm text-neutral-500 pt-4 border-t border-neutral-800 w-full max-w-md">
+        Have a Bike of the Month idea?{' '}
+        <Link to="/community" className="text-accent hover:underline">
+          Submit it here
+        </Link>
+        .
+      </p>
 
       <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
     </div>
