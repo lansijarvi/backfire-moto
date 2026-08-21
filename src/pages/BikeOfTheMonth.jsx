@@ -15,7 +15,7 @@ export default function BikeOfTheMonth() {
     });
   }, []);
 
-  const images = data?.images || [];
+  const media = data?.media || [];
 
   return (
     <div className="flex-1 max-w-5xl mx-auto px-4 py-16 w-full flex flex-col items-center text-center gap-6">
@@ -34,20 +34,28 @@ export default function BikeOfTheMonth() {
           )}
           {data.subject && <p className="text-neutral-400 max-w-xl px-2">{data.subject}</p>}
 
-          {images.length > 0 && (
+          {media.length > 0 && (
             <div className="columns-2 md:columns-3 gap-3 space-y-3 w-full mt-4">
-              {images.map((url, i) => (
+              {media.map((item, i) => (
                 <button
                   key={i}
-                  onClick={() => setLightbox({ url, type: 'image' })}
+                  onClick={() => setLightbox(item)}
                   className="group block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface transition-colors duration-200 hover:border-neutral-600"
                 >
-                  <img
-                    src={url}
-                    alt=""
-                    loading="lazy"
-                    className="w-full transition-transform duration-300 group-hover:scale-105"
-                  />
+                  {item.type === 'video' ? (
+                    <video
+                      src={item.url}
+                      className="w-full transition-transform duration-300 group-hover:scale-105"
+                      muted
+                    />
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt=""
+                      loading="lazy"
+                      className="w-full transition-transform duration-300 group-hover:scale-105"
+                    />
+                  )}
                 </button>
               ))}
             </div>

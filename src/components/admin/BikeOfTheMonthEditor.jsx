@@ -3,9 +3,9 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
+import SortableGrid from './SortableGrid';
 
-const MAX_IMAGES = 5;
-const EMPTY = { title: '', subject: '', images: [] };
+const EMPTY = { title: '', subject: '', media: [] };
 
 export default function BikeOfTheMonthEditor() {
   const [form, setForm] = useState(EMPTY);
@@ -23,35 +23,31 @@ export default function BikeOfTheMonthEditor() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  async function handleImageUpload(e) {
+  async function handleUpload(e) {
     const files = Array.from(e.target.files || []);
-    const room = MAX_IMAGES - form.images.length;
-    if (room <= 0) {
-      setStatus(`Max ${MAX_IMAGES} images — remove one first.`);
-      e.target.value = '';
-      return;
-    }
+    if (files.length === 0) return;
     setUploading(true);
     setStatus('');
     try {
-      const toUpload = files.slice(0, room);
-      const urls = [];
-      for (const file of toUpload) {
-        const compressed = await compressImage(file);
+      const uploaded = [];
+      for (const file of files) {
+        const type = file.type.startsWith('video') ? 'video' : 'image';
+        const uploadFile = type === 'image' ? await compressImage(file) : file;
         const fileRef = ref(storage, `backfire/bike-of-the-month/${Date.now()}-${file.name}`);
-        await uploadBytes(fileRef, compressed);
-        urls.push(await getDownloadURL(fileRef));
+        await uploadBytes(fileRef, uploadFile);
+        const url = await getDownloadURL(fileRef);
+        uploaded.push({ url, type });
       }
-      setForm((f) => ({ ...f, images: [...f.images, ...urls] }));
+      setForm((f) => ({ ...f, media: [...f.media, ...uploaded] }));
     } finally {
       setUploading(false);
       e.target.value = '';
     }
   }
 
-  function removeImage(index) {
-    deleteStorageFileByUrl(storage, form.images[index]);
-    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+  function removeMedia(index) {
+    deleteStorageFileByUrl(storage, form.media[index]?.url);
+    setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== index) }));
   }
 
   async function handleSave(e) {
@@ -67,6 +63,8 @@ export default function BikeOfTheMonthEditor() {
       setSaving(false);
     }
   }
+
+  const mediaWithKeys = form.media.map((m, i) => ({ ...m, _key: `${m.url}-${i}` }));
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-4 max-w-lg">
@@ -90,41 +88,54 @@ export default function BikeOfTheMonthEditor() {
       </label>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm text-neutral-400">Photos ({form.images.length}/{MAX_IMAGES})</span>
-        {form.images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {form.images.map((url, i) => (
-              <div key={i} className="relative">
-                <img
-                  src={url}
-                  alt=""
-                  loading="lazy"
-                  className="w-full aspect-square object-cover rounded border border-neutral-800"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(i)}
-                  className="absolute top-1 right-1 bg-black/70 text-red-400 text-xs px-2 py-1 rounded"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
+        <span className="text-sm text-neutral-400">
+          Photos/videos ({form.media.length}) — you can add more anytime, even after this is
+          already live. Drag to reorder.
+        </span>
+        {form.media.length > 0 && (
+          <SortableGrid
+            items={mediaWithKeys}
+            keyExtractor={(item) => item._key}
+            onReorder={(reordered) => update('media', reordered.map(({ _key, ...m }) => m))}
+            className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+            renderItem={(item) => {
+              const index = form.media.findIndex((m) => m.url === item.url);
+              return (
+                <div className="relative">
+                  {item.type === 'video' ? (
+                    <video src={item.url} className="w-full aspect-square object-cover rounded border border-neutral-800" />
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt=""
+                      loading="lazy"
+                      className="w-full aspect-square object-cover rounded border border-neutral-800"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeMedia(index)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className="absolute top-1 right-1 bg-black/70 text-red-400 text-xs px-2 py-1 rounded"
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            }}
+          />
         )}
-        {form.images.length < MAX_IMAGES && (
-          <label className="bg-surface border border-neutral-700 rounded px-3 py-2 text-sm text-neutral-400 text-center cursor-pointer hover:border-accent transition">
-            {uploading ? 'Uploading…' : 'Add photo(s)'}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              disabled={uploading}
-              className="hidden"
-            />
-          </label>
-        )}
+        <label className="bg-surface border border-neutral-700 rounded px-3 py-2 text-sm text-neutral-400 text-center cursor-pointer hover:border-accent transition">
+          {uploading ? 'Uploading…' : 'Add photo(s)/video(s)'}
+          <input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={handleUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
       </div>
 
       <button

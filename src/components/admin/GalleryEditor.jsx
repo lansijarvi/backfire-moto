@@ -8,10 +8,12 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
+import SortableGrid from './SortableGrid';
 
 export default function GalleryEditor() {
   const [items, setItems] = useState([]);
@@ -19,7 +21,7 @@ export default function GalleryEditor() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    return onSnapshot(query(collection(db, 'gallery'), orderBy('createdAt', 'desc')), (snap) => {
+    return onSnapshot(query(collection(db, 'gallery'), orderBy('order')), (snap) => {
       setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
   }, []);
@@ -33,10 +35,12 @@ export default function GalleryEditor() {
     const fileRef = ref(storage, `backfire/gallery/${Date.now()}-${file.name}`);
     await uploadBytes(fileRef, uploadFile);
     const url = await getDownloadURL(fileRef);
+    const minOrder = items.length > 0 ? Math.min(...items.map((i) => i.order ?? 0)) : 0;
     await addDoc(collection(db, 'gallery'), {
       url,
       type,
       caption: caption.trim(),
+      order: minOrder - 1,
       createdAt: serverTimestamp(),
     });
     setCaption('');
@@ -47,6 +51,13 @@ export default function GalleryEditor() {
   async function handleDelete(item) {
     await deleteStorageFileByUrl(storage, item.url);
     await deleteDoc(doc(db, 'gallery', item.id));
+  }
+
+  async function handleReorder(reordered) {
+    setItems(reordered);
+    const batch = writeBatch(db);
+    reordered.forEach((item, i) => batch.update(doc(db, 'gallery', item.id), { order: i }));
+    await batch.commit();
   }
 
   return (
@@ -67,28 +78,38 @@ export default function GalleryEditor() {
         </label>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {items.map((item) => (
-          <div key={item.id} className="relative group">
-            {item.type === 'video' ? (
-              <video src={item.url} className="w-full aspect-square object-cover rounded border border-neutral-800" />
-            ) : (
-              <img
-                src={item.url}
-                alt=""
-                loading="lazy"
-                className="w-full aspect-square object-cover rounded border border-neutral-800"
-              />
+      {items.length > 0 && (
+        <>
+          <p className="text-xs text-neutral-500">Drag to reorder.</p>
+          <SortableGrid
+            items={items}
+            keyExtractor={(item) => item.id}
+            onReorder={handleReorder}
+            className="grid grid-cols-3 gap-2"
+            renderItem={(item) => (
+              <div className="relative">
+                {item.type === 'video' ? (
+                  <video src={item.url} className="w-full aspect-square object-cover rounded border border-neutral-800" />
+                ) : (
+                  <img
+                    src={item.url}
+                    alt=""
+                    loading="lazy"
+                    className="w-full aspect-square object-cover rounded border border-neutral-800"
+                  />
+                )}
+                <button
+                  onClick={() => handleDelete(item)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="absolute top-1 right-1 bg-black/70 text-red-400 text-xs px-2 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
             )}
-            <button
-              onClick={() => handleDelete(item)}
-              className="absolute top-1 right-1 bg-black/70 text-red-400 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
+          />
+        </>
+      )}
     </div>
   );
 }

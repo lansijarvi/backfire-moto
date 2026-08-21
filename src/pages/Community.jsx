@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { MAILCHIMP_ACTION, MAILCHIMP_HONEYPOT_NAME } from '../mailchimpConfig';
@@ -27,17 +27,17 @@ export default function Community() {
   const mailchimpEmailRef = useRef(null);
 
   useEffect(() => {
-    getDocs(
-      query(collection(db, 'communityPhotos'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'))
-    ).then((snap) => {
-      const flat = snap.docs.flatMap((d) => {
-        const data = d.data();
-        const allMedia = data.media || (data.url ? [{ url: data.url, type: data.type }] : []);
-        const media = data.includedMedia
-          ? allMedia.filter((m) => data.includedMedia.includes(m.url))
-          : allMedia;
-        return media.map((m) => ({ ...m, id: d.id }));
-      });
+    getDocs(query(collection(db, 'communityPhotos'), where('status', '==', 'approved'))).then((snap) => {
+      const flat = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .flatMap((data) => {
+          const allMedia = data.media || (data.url ? [{ url: data.url, type: data.type }] : []);
+          const media = data.includedMedia
+            ? allMedia.filter((m) => data.includedMedia.includes(m.url))
+            : allMedia;
+          return media.map((m) => ({ ...m, id: data.id }));
+        });
       setTiles(flat);
       setLoading(false);
     });

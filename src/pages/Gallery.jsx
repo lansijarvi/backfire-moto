@@ -9,7 +9,7 @@ export default function Gallery() {
   const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
-    getDocs(query(collection(db, 'gallery'), orderBy('createdAt', 'desc'))).then((snap) => {
+    getDocs(query(collection(db, 'gallery'), orderBy('order'))).then((snap) => {
       setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });

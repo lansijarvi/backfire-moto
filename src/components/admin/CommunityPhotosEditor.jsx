@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore';
 import { db, storage } from '../../firebase';
 import { deleteStorageFileByUrl } from '../../lib/imageUpload';
 import Lightbox from '../Lightbox';
+import SortableGrid from './SortableGrid';
 
 function mediaOf(post) {
   return post.media || (post.url ? [{ url: post.url, type: post.type }] : []);
@@ -49,6 +59,7 @@ function MediaGrid({ media, selected, onToggle, onOpenMedia }) {
                 e.stopPropagation();
                 onToggle(i);
               }}
+              onPointerDown={(e) => e.stopPropagation()}
               aria-label={isSelected ? 'Deselect' : 'Select'}
               className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition ${
                 isSelected ? 'bg-accent border-accent text-white' : 'bg-black/60 border-white/70 text-transparent'
@@ -110,6 +121,7 @@ function ApprovedCard({ post, selected, onToggle, onOpenMedia, onUpdate, onRejec
           {dirty && (
             <button
               onClick={onUpdate}
+              onPointerDown={(e) => e.stopPropagation()}
               className="flex-1 bg-accent text-white text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:brightness-110 transition"
             >
               Update
@@ -117,6 +129,7 @@ function ApprovedCard({ post, selected, onToggle, onOpenMedia, onUpdate, onRejec
           )}
           <button
             onClick={onReject}
+            onPointerDown={(e) => e.stopPropagation()}
             className="flex-1 border border-red-900 text-red-400 text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded hover:bg-red-950 transition"
           >
             Remove All
@@ -157,7 +170,9 @@ export default function CommunityPhotosEditor() {
   }, []);
 
   const pending = posts.filter((p) => p.status === 'pending');
-  const approved = posts.filter((p) => p.status === 'approved');
+  const approved = posts
+    .filter((p) => p.status === 'approved')
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   function toggleSelection(postId, index) {
     setSelections((prev) => {
@@ -183,11 +198,22 @@ export default function CommunityPhotosEditor() {
   async function approve(post) {
     const includedMedia = includedUrlsFor(post);
     if (includedMedia.length === 0) return;
-    await updateDoc(doc(db, 'communityPhotos', post.id), { status: 'approved', includedMedia });
+    const minOrder = approved.length > 0 ? Math.min(...approved.map((p) => p.order ?? 0)) : 0;
+    await updateDoc(doc(db, 'communityPhotos', post.id), {
+      status: 'approved',
+      includedMedia,
+      order: minOrder - 1,
+    });
   }
 
   async function updateIncluded(post) {
     await updateDoc(doc(db, 'communityPhotos', post.id), { includedMedia: includedUrlsFor(post) });
+  }
+
+  async function reorderApproved(reordered) {
+    const batch = writeBatch(db);
+    reordered.forEach((post, i) => batch.update(doc(db, 'communityPhotos', post.id), { order: i }));
+    await batch.commit();
   }
 
   async function reject(post) {
@@ -229,20 +255,26 @@ export default function CommunityPhotosEditor() {
         {approved.length === 0 ? (
           <p className="text-sm text-neutral-500">None yet.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {approved.map((post) => (
-              <ApprovedCard
-                key={post.id}
-                post={post}
-                selected={selections[post.id]}
-                onToggle={(i) => toggleSelection(post.id, i)}
-                onOpenMedia={setLightbox}
-                onUpdate={() => updateIncluded(post)}
-                onReject={() => reject(post)}
-                dirty={isDirty(post)}
-              />
-            ))}
-          </div>
+          <>
+            <p className="text-xs text-neutral-500 mb-3">Drag a card to change its order on the public page.</p>
+            <SortableGrid
+              items={approved}
+              keyExtractor={(post) => post.id}
+              onReorder={reorderApproved}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
+              renderItem={(post) => (
+                <ApprovedCard
+                  post={post}
+                  selected={selections[post.id]}
+                  onToggle={(i) => toggleSelection(post.id, i)}
+                  onOpenMedia={setLightbox}
+                  onUpdate={() => updateIncluded(post)}
+                  onReject={() => reject(post)}
+                  dirty={isDirty(post)}
+                />
+              )}
+            />
+          </>
         )}
       </div>
 
