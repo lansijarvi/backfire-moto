@@ -9,6 +9,7 @@ import SocialEditor from '../components/admin/SocialEditor';
 import OrdersList from '../components/admin/OrdersList';
 import CommunityPhotosEditor from '../components/admin/CommunityPhotosEditor';
 import BikeOfTheMonthEditor from '../components/admin/BikeOfTheMonthEditor';
+import MessagesList from '../components/admin/MessagesList';
 
 const TABS = [
   { id: 'event', label: 'Event', Component: EventEditor },
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'orders', label: 'Orders', Component: OrdersList },
   { id: 'gallery', label: 'Gallery', Component: GalleryEditor },
   { id: 'community', label: 'Community Photos', Component: CommunityPhotosEditor },
+  { id: 'messages', label: 'Messages', Component: MessagesList },
   { id: 'social', label: 'Social Links', Component: SocialEditor },
 ];
 

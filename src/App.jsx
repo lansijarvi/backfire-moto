@@ -17,6 +17,7 @@ import DonateSuccess from './pages/DonateSuccess';
 import DonateDisplay from './pages/DonateDisplay';
 import Community from './pages/Community';
 import BikeOfTheMonth from './pages/BikeOfTheMonth';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/bike-of-the-month" element={<BikeOfTheMonth />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />

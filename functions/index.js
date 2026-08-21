@@ -207,3 +207,37 @@ exports.notifyCommunityPhotoSubmission = onDocumentCreated(
     }
   }
 );
+
+exports.notifyContactMessage = onDocumentCreated(
+  { document: 'contactMessages/{docId}', secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const data = event.data.data();
+
+    const bodyLines = [
+      `From: ${data.name || '(not given)'} <${data.email || 'no email'}>`,
+      '',
+      data.message || '(no message)',
+      '',
+      'Reply directly to this email to respond, or manage it at https://backfiremoto.com/admin',
+    ];
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Backfire Moto <notifications@backfiremoto.com>',
+        to: ['backfiremoto@gmail.com'],
+        reply_to: data.email ? [data.email] : undefined,
+        subject: `Contact form: ${data.subject || '(no subject)'}`,
+        text: bodyLines.join('\n'),
+      }),
+    });
+
+    if (!res.ok) {
+      console.error('Resend send failed:', res.status, await res.text());
+    }
+  }
+);

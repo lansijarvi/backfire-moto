@@ -48,5 +48,14 @@ service cloud.firestore {
         && request.resource.data.deviceId is string;
       allow delete: if true;
     }
+
+    // Contact form — anyone can send a message, only admin can read/manage them.
+    match /contactMessages/{docId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if request.resource.data.read == false
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.message is string;
+    }
   }
 }

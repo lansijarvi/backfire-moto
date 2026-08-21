@@ -60,14 +60,24 @@ export default function Navbar() {
   const { user } = useAuth();
   const isAdmin = user?.uid === ADMIN_UID;
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
-    return onSnapshot(query(collection(db, 'communityPhotos'), where('status', '==', 'pending')), (snap) => {
+    const unsub1 = onSnapshot(query(collection(db, 'communityPhotos'), where('status', '==', 'pending')), (snap) => {
       setPendingCount(snap.size);
     });
+    const unsub2 = onSnapshot(query(collection(db, 'contactMessages'), where('read', '==', false)), (snap) => {
+      setUnreadCount(snap.size);
+    });
+    return () => {
+      unsub1();
+      unsub2();
+    };
   }, [isAdmin]);
+
+  const adminBadgeCount = pendingCount + unreadCount;
 
   const linkClass = ({ isActive }) =>
     `transition-colors ${isActive ? 'text-accent' : 'text-neutral-400 hover:text-white'}`;
@@ -90,7 +100,7 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          {isAdmin && <AdminLink pendingCount={pendingCount} />}
+          {isAdmin && <AdminLink pendingCount={adminBadgeCount} />}
           <CartButton totalCount={totalCount} onClick={() => setIsOpen(true)} />
         </nav>
 
@@ -118,7 +128,7 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          {isAdmin && <AdminLink pendingCount={pendingCount} onNavigate={() => setMenuOpen(false)} />}
+          {isAdmin && <AdminLink pendingCount={adminBadgeCount} onNavigate={() => setMenuOpen(false)} />}
         </nav>
       )}
     </header>
