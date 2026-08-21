@@ -11,9 +11,16 @@ function ProductCard({ product }) {
   const [size, setSize] = useState(sizeOptions[0] || '');
 
   return (
-    <div className="border border-neutral-800 rounded-lg overflow-hidden bg-surface flex flex-col">
+    <div className="group border border-neutral-800 rounded-lg overflow-hidden bg-surface flex flex-col transition-all duration-200 hover:border-neutral-600 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
       {product.imageUrl && (
-        <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full aspect-square object-cover" />
+        <div className="overflow-hidden">
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            loading="lazy"
+            className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
       )}
       <div className="p-4 flex flex-col gap-2 flex-1">
         <h2 className="text-white font-semibold">{product.name}</h2>
@@ -21,10 +28,14 @@ function ProductCard({ product }) {
           <select
             value={size}
             onChange={(e) => setSize(e.target.value)}
-            className="bg-bg border border-neutral-700 rounded px-2 py-1.5 text-sm text-white"
+            className="appearance-none bg-bg border border-neutral-700 rounded px-2 py-1.5 pr-8 text-sm text-white focus:outline-none focus:border-accent transition-colors bg-no-repeat bg-[right_0.5rem_center] bg-[length:14px]"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
+            }}
           >
             {sizeOptions.map((s) => (
-              <option key={s} value={s}>
+              <option key={s} value={s} className="bg-surface text-white">
                 {s}
               </option>
             ))}

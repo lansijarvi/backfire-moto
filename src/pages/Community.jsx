@@ -203,12 +203,17 @@ export default function Community() {
             <button
               key={`${tile.id}-${i}`}
               onClick={() => setLightbox(tile)}
-              className="block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface"
+              className="group block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface transition-colors duration-200 hover:border-neutral-600"
             >
               {tile.type === 'video' ? (
-                <video src={tile.url} className="w-full" muted />
+                <video src={tile.url} className="w-full transition-transform duration-300 group-hover:scale-105" muted />
               ) : (
-                <img src={tile.url} alt="" loading="lazy" className="w-full" />
+                <img
+                  src={tile.url}
+                  alt=""
+                  loading="lazy"
+                  className="w-full transition-transform duration-300 group-hover:scale-105"
+                />
               )}
             </button>
           ))}

@@ -40,9 +40,14 @@ export default function BikeOfTheMonth() {
                 <button
                   key={i}
                   onClick={() => setLightbox({ url, type: 'image' })}
-                  className="block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface"
+                  className="group block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface transition-colors duration-200 hover:border-neutral-600"
                 >
-                  <img src={url} alt="" loading="lazy" className="w-full" />
+                  <img
+                    src={url}
+                    alt=""
+                    loading="lazy"
+                    className="w-full transition-transform duration-300 group-hover:scale-105"
+                  />
                 </button>
               ))}
             </div>
