@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Lightbox from '../components/Lightbox';
+import Reactions from '../components/Reactions';
 
 export default function BikeOfTheMonth() {
   const [data, setData] = useState(null);
@@ -33,6 +34,8 @@ export default function BikeOfTheMonth() {
             <h2 className="font-heading text-2xl sm:text-3xl text-accent break-words px-2">{data.title}</h2>
           )}
           {data.subject && <p className="text-neutral-400 max-w-xl px-2">{data.subject}</p>}
+
+          {data.postId && <Reactions targetId={data.postId} className="justify-center" />}
 
           {media.length > 0 && (
             <div className="columns-2 md:columns-3 gap-3 space-y-3 w-full mt-4">

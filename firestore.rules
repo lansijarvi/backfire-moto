@@ -37,5 +37,16 @@ service cloud.firestore {
       allow create: if request.resource.data.status == 'pending';
       allow update, delete: if isAdmin();
     }
+
+    // Facebook-style reactions — no login, just a per-browser anonymous device ID.
+    // Publicly readable (needed to show counts) and publicly writable (this is a
+    // low-stakes fun feature, not something that needs real auth to protect).
+    match /reactions/{docId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.emoji in ['like', 'love', 'haha', 'wow', 'sad', 'angry']
+        && request.resource.data.targetId is string
+        && request.resource.data.deviceId is string;
+      allow delete: if true;
+    }
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import Lightbox from '../components/Lightbox';
+import Reactions from '../components/Reactions';
 
 export default function Gallery() {
   const [items, setItems] = useState([]);
@@ -46,8 +47,9 @@ export default function Gallery() {
                 </button>
               )}
               {item.caption && (
-                <p className="text-xs text-neutral-500 px-3 py-2">{item.caption}</p>
+                <p className="text-xs text-neutral-500 px-3 pt-2">{item.caption}</p>
               )}
+              <Reactions targetId={item.id} className="px-3 py-2" />
             </div>
           ))}
         </div>

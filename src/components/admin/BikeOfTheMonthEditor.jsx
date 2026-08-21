@@ -5,7 +5,7 @@ import { db, storage } from '../../firebase';
 import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 import SortableGrid from './SortableGrid';
 
-const EMPTY = { title: '', subject: '', media: [] };
+const EMPTY = { title: '', subject: '', media: [], postId: '' };
 
 export default function BikeOfTheMonthEditor() {
   const [form, setForm] = useState(EMPTY);
@@ -55,13 +55,28 @@ export default function BikeOfTheMonthEditor() {
     setSaving(true);
     setStatus('');
     try {
-      await setDoc(doc(db, 'settings', 'bikeOfTheMonth'), form);
+      // postId identifies "this bike feature" for reactions — keep the same one across
+      // edits (adding photos, fixing a typo), only "Start New" below generates a fresh one.
+      const toSave = form.postId ? form : { ...form, postId: crypto.randomUUID() };
+      await setDoc(doc(db, 'settings', 'bikeOfTheMonth'), toSave);
+      setForm(toSave);
       setStatus('Saved.');
     } catch {
       setStatus('Failed to save.');
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleStartNew() {
+    if (!confirm('Start a new Bike of the Month? This clears the title, subject, and photos — reactions on the current one will no longer be reachable. This can\'t be undone.')) {
+      return;
+    }
+    await Promise.all(form.media.map((m) => deleteStorageFileByUrl(storage, m.url)));
+    const fresh = { ...EMPTY, postId: crypto.randomUUID() };
+    setForm(fresh);
+    await setDoc(doc(db, 'settings', 'bikeOfTheMonth'), fresh);
+    setStatus('Started fresh — add a title, subject, and photos, then Save.');
   }
 
   const mediaWithKeys = form.media.map((m, i) => ({ ...m, _key: `${m.url}-${i}` }));
@@ -138,13 +153,26 @@ export default function BikeOfTheMonthEditor() {
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="self-start bg-accent text-white font-semibold px-5 py-2.5 rounded text-sm uppercase tracking-wide hover:brightness-110 disabled:opacity-60 transition"
-      >
-        {saving ? 'Saving…' : 'Save'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={saving}
+          className="bg-accent text-white font-semibold px-5 py-2.5 rounded text-sm uppercase tracking-wide hover:brightness-110 disabled:opacity-60 transition"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <button
+          type="button"
+          onClick={handleStartNew}
+          className="text-sm text-neutral-500 hover:text-red-400 transition"
+        >
+          Start a new Bike of the Month
+        </button>
+      </div>
+      <p className="text-xs text-neutral-600 -mt-2">
+        "Save" edits the current feature (reactions stay intact). "Start new" clears
+        everything for a fresh bike next month and resets reactions.
+      </p>
       {status && <p className="text-sm text-neutral-400">{status}</p>}
     </form>
   );

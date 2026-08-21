@@ -5,6 +5,7 @@ import { db, storage } from '../firebase';
 import { MAILCHIMP_ACTION, MAILCHIMP_HONEYPOT_NAME } from '../mailchimpConfig';
 import { compressImage } from '../lib/imageUpload';
 import Lightbox from '../components/Lightbox';
+import Reactions from '../components/Reactions';
 
 const MAX_FILES = 5;
 
@@ -200,22 +201,24 @@ export default function Community() {
       ) : (
         <div className="columns-2 md:columns-3 gap-3 space-y-3">
           {tiles.map((tile, i) => (
-            <button
+            <div
               key={`${tile.id}-${i}`}
-              onClick={() => setLightbox(tile)}
-              className="group block w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface transition-colors duration-200 hover:border-neutral-600"
+              className="group w-full break-inside-avoid rounded-lg overflow-hidden border border-neutral-800 bg-surface transition-colors duration-200 hover:border-neutral-600"
             >
-              {tile.type === 'video' ? (
-                <video src={tile.url} className="w-full transition-transform duration-300 group-hover:scale-105" muted />
-              ) : (
-                <img
-                  src={tile.url}
-                  alt=""
-                  loading="lazy"
-                  className="w-full transition-transform duration-300 group-hover:scale-105"
-                />
-              )}
-            </button>
+              <button onClick={() => setLightbox(tile)} className="block w-full overflow-hidden">
+                {tile.type === 'video' ? (
+                  <video src={tile.url} className="w-full transition-transform duration-300 group-hover:scale-105" muted />
+                ) : (
+                  <img
+                    src={tile.url}
+                    alt=""
+                    loading="lazy"
+                    className="w-full transition-transform duration-300 group-hover:scale-105"
+                  />
+                )}
+              </button>
+              <Reactions targetId={tile.url} className="px-2 py-1.5" />
+            </div>
           ))}
         </div>
       )}
