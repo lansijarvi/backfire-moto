@@ -15,6 +15,39 @@ export default function Home() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!event?.eventStart) return;
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Event',
+      name: event.title || 'Backfire Motorcycle Night',
+      startDate: event.eventStart,
+      ...(event.eventEnd && { endDate: event.eventEnd }),
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      eventStatus: 'https://schema.org/EventScheduled',
+      description: event.description || undefined,
+      image: event.flyerImageUrl || undefined,
+      url: 'https://backfiremoto.com/',
+      location: event.venueName
+        ? {
+            '@type': 'Place',
+            name: event.venueName,
+            address: event.venueAddress || undefined,
+          }
+        : undefined,
+      organizer: {
+        '@type': 'Organization',
+        name: 'Backfire Moto',
+        url: 'https://backfiremoto.com/',
+      },
+    });
+    document.head.appendChild(script);
+    return () => document.head.removeChild(script);
+  }, [event]);
+
   return (
     <div className="flex-1">
       <section className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center text-center gap-8">

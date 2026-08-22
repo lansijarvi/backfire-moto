@@ -4,7 +4,18 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 
-const EMPTY = { title: '', dateText: '', description: '', flyerImageUrl: '', ctaText: '', ctaUrl: '' };
+const EMPTY = {
+  title: '',
+  dateText: '',
+  description: '',
+  flyerImageUrl: '',
+  ctaText: '',
+  ctaUrl: '',
+  eventStart: '',
+  eventEnd: '',
+  venueName: '',
+  venueAddress: '',
+};
 
 export default function EventEditor() {
   const [form, setForm] = useState(EMPTY);
@@ -78,6 +89,54 @@ export default function EventEditor() {
           className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
         />
       </label>
+
+      <div className="border-t border-neutral-800 pt-4 mt-1">
+        <p className="text-xs uppercase tracking-wide text-neutral-500 mb-3">
+          For Google search (not shown on the page) — fill these in so the event can show up
+          with its date/location directly in search results.
+        </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-3">
+            <label className="flex flex-col gap-1 text-sm text-neutral-400 flex-1">
+              Start date &amp; time
+              <input
+                type="datetime-local"
+                value={form.eventStart}
+                onChange={(e) => update('eventStart', e.target.value)}
+                className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-neutral-400 flex-1">
+              End date &amp; time (optional)
+              <input
+                type="datetime-local"
+                value={form.eventEnd}
+                onChange={(e) => update('eventEnd', e.target.value)}
+                className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+              />
+            </label>
+          </div>
+          <label className="flex flex-col gap-1 text-sm text-neutral-400">
+            Venue name
+            <input
+              value={form.venueName}
+              onChange={(e) => update('venueName', e.target.value)}
+              placeholder="Two-Kick Coffee"
+              className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-neutral-400">
+            Venue address
+            <input
+              value={form.venueAddress}
+              onChange={(e) => update('venueAddress', e.target.value)}
+              placeholder="3208 Queen Anne Ave N, Seattle, WA 98109"
+              className="bg-surface border border-neutral-700 rounded px-3 py-2 text-white focus:outline-none focus:border-accent"
+            />
+          </label>
+        </div>
+      </div>
+
       <label className="flex flex-col gap-1 text-sm text-neutral-400">
         Flyer image
         <input type="file" accept="image/*" onChange={handleFlyerUpload} className="text-sm text-neutral-400" />
