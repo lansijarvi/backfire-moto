@@ -3,6 +3,7 @@ const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 
 initializeApp();
 const db = getFirestore();
@@ -10,6 +11,9 @@ const db = getFirestore();
 const STRIPE_SECRET_KEY = defineSecret('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
+
+const ADMIN_UID = 'eKhkvvFajRX6XfOP3baFBh5n5V33';
+const GA4_PROPERTY_ID = '551126191';
 
 // Site currently lives at /backfire-moto/ (GitHub Pages project path) and will move to
 // / once backfiremoto.com DNS is cut over — see vite.config.js. Only allow these two so
@@ -207,6 +211,69 @@ exports.notifyCommunityPhotoSubmission = onDocumentCreated(
     }
   }
 );
+
+exports.getAnalyticsSummary = onCall(async (request) => {
+  if (request.auth?.uid !== ADMIN_UID) {
+    throw new HttpsError('permission-denied', 'Admin only.');
+  }
+
+  const client = new BetaAnalyticsDataClient();
+  const property = `properties/${GA4_PROPERTY_ID}`;
+
+  const [totals, byDay, topPages, sources] = await Promise.all([
+    client.runReport({
+      property,
+      dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }],
+      metrics: [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }],
+    }),
+    client.runReport({
+      property,
+      dateRanges: [{ startDate: '13daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'date' }],
+      metrics: [{ name: 'activeUsers' }, { name: 'screenPageViews' }],
+      orderBys: [{ dimension: { dimensionName: 'date' } }],
+    }),
+    client.runReport({
+      property,
+      dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'pagePath' }],
+      metrics: [{ name: 'screenPageViews' }],
+      orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+      limit: 10,
+    }),
+    client.runReport({
+      property,
+      dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+      metrics: [{ name: 'sessions' }],
+      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+      limit: 8,
+    }),
+  ]);
+
+  const totalsRow = totals[0].rows?.[0];
+
+  return {
+    last7Days: {
+      activeUsers: Number(totalsRow?.metricValues?.[0]?.value || 0),
+      sessions: Number(totalsRow?.metricValues?.[1]?.value || 0),
+      pageViews: Number(totalsRow?.metricValues?.[2]?.value || 0),
+    },
+    byDay: (byDay[0].rows || []).map((r) => ({
+      date: r.dimensionValues[0].value,
+      activeUsers: Number(r.metricValues[0].value),
+      pageViews: Number(r.metricValues[1].value),
+    })),
+    topPages: (topPages[0].rows || []).map((r) => ({
+      path: r.dimensionValues[0].value,
+      pageViews: Number(r.metricValues[0].value),
+    })),
+    sources: (sources[0].rows || []).map((r) => ({
+      channel: r.dimensionValues[0].value,
+      sessions: Number(r.metricValues[0].value),
+    })),
+  };
+});
 
 exports.notifyContactMessage = onDocumentCreated(
   { document: 'contactMessages/{docId}', secrets: [RESEND_API_KEY] },
