@@ -7,12 +7,12 @@ import { useAuth } from '../context/AuthContext';
 import { ADMIN_UID } from '../adminConfig';
 
 const LINKS = [
-  { to: 'https://themotolist.com', label: 'Classifieds', external: true, title: 'Built by Backfire Moto' },
   { to: '/', label: 'Home', end: true },
   { to: '/bike-of-the-month', label: 'Bike of the Month' },
   { to: '/community', label: 'Community', title: 'Photos brought to you by the community' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/shop', label: 'Shop' },
+  { to: 'https://themotolist.com', label: 'Classifieds', external: true, title: 'Built by Backfire Moto' },
   { to: '/donate', label: 'Donate' },
 ];
 
