@@ -7,9 +7,10 @@ import { useAuth } from '../context/AuthContext';
 import { ADMIN_UID } from '../adminConfig';
 
 const LINKS = [
+  { to: 'https://themotolist.com', label: 'Classifieds', external: true, title: 'Built by Backfire Moto' },
   { to: '/', label: 'Home', end: true },
   { to: '/bike-of-the-month', label: 'Bike of the Month' },
-  { to: '/community', label: 'Community' },
+  { to: '/community', label: 'Community', title: 'Photos brought to you by the community' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/shop', label: 'Shop' },
   { to: '/donate', label: 'Donate' },
@@ -95,11 +96,24 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm uppercase tracking-wide">
-          {LINKS.map((link) => (
-            <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
-              {link.label}
-            </NavLink>
-          ))}
+          {LINKS.map((link) =>
+            link.external ? (
+              <a
+                key={link.to}
+                href={link.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={link.title}
+                className="text-neutral-400 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <NavLink key={link.to} to={link.to} end={link.end} title={link.title} className={linkClass}>
+                {link.label}
+              </NavLink>
+            )
+          )}
           {isAdmin && <AdminLink pendingCount={adminBadgeCount} />}
           <CartButton totalCount={totalCount} onClick={() => setIsOpen(true)} />
         </nav>
@@ -123,11 +137,32 @@ export default function Navbar() {
       {/* Mobile menu panel */}
       {menuOpen && (
         <nav className="md:hidden border-t border-neutral-800 px-4 py-4 flex flex-col gap-4 text-sm uppercase tracking-wide bg-bg">
-          {LINKS.map((link) => (
-            <NavLink key={link.to} to={link.to} end={link.end} onClick={() => setMenuOpen(false)} className={linkClass}>
-              {link.label}
-            </NavLink>
-          ))}
+          {LINKS.map((link) =>
+            link.external ? (
+              <a
+                key={link.to}
+                href={link.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={link.title}
+                onClick={() => setMenuOpen(false)}
+                className="text-neutral-400 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                title={link.title}
+                onClick={() => setMenuOpen(false)}
+                className={linkClass}
+              >
+                {link.label}
+              </NavLink>
+            )
+          )}
           {isAdmin && <AdminLink pendingCount={adminBadgeCount} onNavigate={() => setMenuOpen(false)} />}
         </nav>
       )}
