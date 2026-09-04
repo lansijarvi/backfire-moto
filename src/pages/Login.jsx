@@ -14,8 +14,9 @@ export default function Login() {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
       navigate('/admin');
-    } catch {
-      setError('Sign-in failed. Try again.');
+    } catch (err) {
+      console.error('Google sign-in failed:', err);
+      setError(`Sign-in failed: ${err.code || err.message}`);
     } finally {
       setLoading(false);
     }
