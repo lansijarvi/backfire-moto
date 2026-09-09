@@ -1,6 +1,86 @@
 import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../firebase';
+
+function ReplyThread({ message }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  async function send(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!text.trim()) return;
+    setSending(true);
+    setError('');
+    try {
+      const sendMessageReply = httpsCallable(functions, 'sendMessageReply');
+      await sendMessageReply({ messageId: message.id, replyText: text.trim() });
+      setText('');
+      setOpen(false);
+    } catch (err) {
+      setError(err.message || 'Failed to send reply.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 border-t border-neutral-800 pt-3" onClick={(e) => e.stopPropagation()}>
+      {message.replies?.length > 0 && (
+        <div className="flex flex-col gap-2 mb-3">
+          {message.replies.map((r, i) => (
+            <div key={i} className="bg-bg border border-neutral-800 rounded p-3 text-sm">
+              <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">
+                You replied {r.sentAt ? new Date(r.sentAt).toLocaleString() : ''}
+              </p>
+              <p className="text-neutral-300 whitespace-pre-wrap">{r.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {open ? (
+        <form onSubmit={send} className="flex flex-col gap-2">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            autoFocus
+            placeholder={`Reply to ${message.name || message.email}...`}
+            className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+          />
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={sending || !text.trim()}
+              className="bg-accent text-white text-xs font-semibold uppercase tracking-wide px-4 py-2 rounded hover:brightness-110 disabled:opacity-60 transition"
+            >
+              {sending ? 'Sending…' : 'Send Reply'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-xs text-neutral-500 hover:text-white px-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="text-xs text-accent hover:brightness-110 font-semibold uppercase tracking-wide"
+        >
+          Reply
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function MessagesList() {
   const [messages, setMessages] = useState([]);
@@ -48,6 +128,7 @@ export default function MessagesList() {
             >
               Delete
             </button>
+            <ReplyThread message={m} />
           </div>
         ))}
         {messages.length === 0 && <p className="text-sm text-neutral-500">No messages yet.</p>}

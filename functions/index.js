@@ -308,3 +308,53 @@ exports.notifyContactMessage = onDocumentCreated(
     }
   }
 );
+
+exports.sendMessageReply = onCall({ secrets: [RESEND_API_KEY] }, async (request) => {
+  if (request.auth?.uid !== ADMIN_UID) {
+    throw new HttpsError('permission-denied', 'Admin only.');
+  }
+
+  const messageId = request.data?.messageId;
+  const replyText = (request.data?.replyText || '').trim();
+  if (!messageId || !replyText) {
+    throw new HttpsError('invalid-argument', 'messageId and replyText are required.');
+  }
+
+  const msgRef = db.collection('contactMessages').doc(messageId);
+  const msgSnap = await msgRef.get();
+  if (!msgSnap.exists) {
+    throw new HttpsError('not-found', 'Message not found.');
+  }
+
+  const msg = msgSnap.data();
+  if (!msg.email) {
+    throw new HttpsError('failed-precondition', 'This message has no sender email to reply to.');
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'Backfire Moto <notifications@backfiremoto.com>',
+      to: [msg.email],
+      reply_to: ['backfiremoto@gmail.com'],
+      subject: `Re: ${msg.subject || 'Your message to Backfire Moto'}`,
+      text: replyText,
+    }),
+  });
+
+  if (!res.ok) {
+    console.error('Resend send failed:', res.status, await res.text());
+    throw new HttpsError('internal', 'Failed to send the reply email.');
+  }
+
+  await msgRef.update({
+    read: true,
+    replies: FieldValue.arrayUnion({ text: replyText, sentAt: new Date().toISOString() }),
+  });
+
+  return { success: true };
+});
