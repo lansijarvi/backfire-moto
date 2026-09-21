@@ -23,7 +23,9 @@ export default function Community() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [lightbox, setLightbox] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
 
+  const formSectionRef = useRef(null);
   const mailchimpFormRef = useRef(null);
   const mailchimpEmailRef = useRef(null);
 
@@ -43,6 +45,11 @@ export default function Community() {
       setLoading(false);
     });
   }, []);
+
+  function openForm() {
+    setFormOpen(true);
+    requestAnimationFrame(() => formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
 
   function handleFileChange(e) {
     const chosen = Array.from(e.target.files || []);
@@ -109,90 +116,17 @@ export default function Community() {
         Your bike, your rig at the event, rocking a Backfire shirt — share it here. We check
         every submission before it goes public.
       </p>
-      <p className="text-accent text-center max-w-lg mx-auto mb-10 text-sm">
+      <p className="text-accent text-center max-w-lg mx-auto mb-5 text-sm">
         We might feature your bike (and your story) in the newsletter!
       </p>
-
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-sm mx-auto flex flex-col gap-3 mb-16 border border-neutral-800 rounded-lg p-6 bg-surface"
-      >
-        {submitted ? (
-          <p className="text-accent text-center font-medium">
-            Thanks! Your submission is in for review — we'll add it soon.
-          </p>
-        ) : (
-          <>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name or @handle (optional)"
-              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
-            />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email"
-              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
-            />
-            <textarea
-              value={story}
-              onChange={(e) => setStory(e.target.value)}
-              placeholder="Tell us the story behind it (optional)"
-              rows={3}
-              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
-            />
-            <label className="flex items-start gap-2 text-xs text-neutral-400">
-              <input
-                type="checkbox"
-                checked={newsletterOptIn}
-                onChange={(e) => setNewsletterOptIn(e.target.checked)}
-                className="mt-0.5"
-              />
-              Sign me up for the Backfire Moto newsletter
-            </label>
-            <label className="flex items-start gap-2 text-xs text-neutral-400">
-              <input
-                type="checkbox"
-                checked={usageConsent}
-                onChange={(e) => setUsageConsent(e.target.checked)}
-                className="mt-0.5"
-              />
-              I have the right to share this and give Backfire Moto permission to use it on
-              our website, social media, newsletter, and event promotions.
-            </label>
-            <label className="bg-accent text-white text-sm font-semibold uppercase tracking-wide px-4 py-3 rounded text-center cursor-pointer hover:brightness-110 transition">
-              {files.length > 0 ? `${files.length} file${files.length > 1 ? 's' : ''} chosen` : 'Choose Photos/Videos'}
-              <input
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                onChange={handleFileChange}
-                disabled={uploading}
-                className="hidden"
-              />
-            </label>
-            <p className="text-xs text-neutral-500 text-center">Up to {MAX_FILES} photos or short videos</p>
-            {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-            <button
-              type="submit"
-              disabled={uploading}
-              className="bg-accent text-white text-sm font-semibold uppercase tracking-wide px-4 py-3 rounded hover:brightness-110 disabled:opacity-60 transition"
-            >
-              {uploading ? 'Uploading…' : 'Submit'}
-            </button>
-          </>
-        )}
-      </form>
-
-      {/* Hidden Mailchimp opt-in form, submitted programmatically when checked above */}
-      <form ref={mailchimpFormRef} action={MAILCHIMP_ACTION} method="post" target="mc-community-iframe" className="hidden">
-        <input ref={mailchimpEmailRef} type="email" name="EMAIL" />
-        <input type="text" name={MAILCHIMP_HONEYPOT_NAME} defaultValue="" />
-      </form>
-      <iframe name="mc-community-iframe" title="mailchimp" className="hidden" />
+      <div className="text-center mb-10">
+        <button
+          onClick={openForm}
+          className="border border-accent text-accent hover:bg-accent hover:text-white text-xs font-semibold uppercase tracking-wide px-4 py-2 rounded transition-colors"
+        >
+          Share yours ↓
+        </button>
+      </div>
 
       {loading ? (
         <p className="text-center text-neutral-500">Loading…</p>
@@ -222,6 +156,112 @@ export default function Community() {
           ))}
         </div>
       )}
+
+      <section ref={formSectionRef} className="mt-16 pt-10 border-t border-neutral-800 scroll-mt-24 text-center">
+        <h2 className="font-heading text-2xl text-white">Share your bike</h2>
+
+        {submitted ? (
+          <p className="text-accent font-medium mt-3">
+            Thanks! Your submission is in for review — we'll add it soon.
+          </p>
+        ) : !formOpen ? (
+          <>
+            <p className="text-sm text-neutral-500 mt-1 mb-4">Photos or short videos, reviewed before they go public.</p>
+            <button
+              onClick={openForm}
+              className="bg-accent text-white text-sm font-semibold uppercase tracking-wide px-5 py-2.5 rounded hover:brightness-110 transition"
+            >
+              Submit a photo
+            </button>
+          </>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="relative max-w-lg mx-auto flex flex-col gap-3 mt-4 border border-neutral-800 rounded-lg p-4 bg-surface text-left"
+          >
+            <button
+              type="button"
+              onClick={() => setFormOpen(false)}
+              aria-label="Close form"
+              className="absolute top-2 right-3 text-neutral-500 hover:text-white text-lg leading-none"
+            >
+              ×
+            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-5">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Name or @handle (optional)"
+                className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+              />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Your email"
+                className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+              />
+            </div>
+            <textarea
+              value={story}
+              onChange={(e) => setStory(e.target.value)}
+              placeholder="Tell us the story behind it (optional)"
+              rows={2}
+              className="bg-bg border border-neutral-700 rounded px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-accent"
+            />
+            <label className="flex items-start gap-2 text-xs text-neutral-400">
+              <input
+                type="checkbox"
+                checked={newsletterOptIn}
+                onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                className="mt-0.5"
+              />
+              Sign me up for the Backfire Moto newsletter
+            </label>
+            <label className="flex items-start gap-2 text-xs text-neutral-400">
+              <input
+                type="checkbox"
+                checked={usageConsent}
+                onChange={(e) => setUsageConsent(e.target.checked)}
+                className="mt-0.5"
+              />
+              I have the right to share this and give Backfire Moto permission to use it on
+              our website, social media, newsletter, and event promotions.
+            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex-1 border border-dashed border-neutral-600 hover:border-accent text-neutral-300 text-sm px-3 py-2.5 rounded text-center cursor-pointer transition-colors">
+                {files.length > 0
+                  ? `${files.length} file${files.length > 1 ? 's' : ''} chosen`
+                  : `Add photos/videos (up to ${MAX_FILES})`}
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={uploading}
+                className="bg-accent text-white text-sm font-semibold uppercase tracking-wide px-5 py-2.5 rounded hover:brightness-110 disabled:opacity-60 transition"
+              >
+                {uploading ? 'Uploading…' : 'Submit'}
+              </button>
+            </div>
+            {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+          </form>
+        )}
+      </section>
+
+      {/* Hidden Mailchimp opt-in form, submitted programmatically when checked above */}
+      <form ref={mailchimpFormRef} action={MAILCHIMP_ACTION} method="post" target="mc-community-iframe" className="hidden">
+        <input ref={mailchimpEmailRef} type="email" name="EMAIL" />
+        <input type="text" name={MAILCHIMP_HONEYPOT_NAME} defaultValue="" />
+      </form>
+      <iframe name="mc-community-iframe" title="mailchimp" className="hidden" />
 
       <Lightbox media={lightbox} onClose={() => setLightbox(null)} />
     </div>
