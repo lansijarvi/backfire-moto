@@ -17,6 +17,7 @@ import DonateSuccess from './pages/DonateSuccess';
 import DonateDisplay from './pages/DonateDisplay';
 import Community from './pages/Community';
 import BikeOfTheMonth from './pages/BikeOfTheMonth';
+import PastBike from './pages/PastBike';
 import Contact from './pages/Contact';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/shop" element={<Shop />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/bike-of-the-month" element={<BikeOfTheMonth />} />
+          <Route path="/bike-of-the-month/past/:postId" element={<PastBike />} />
           <Route path="/community" element={<Community />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />

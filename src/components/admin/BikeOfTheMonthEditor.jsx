@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 import { compressImage, deleteStorageFileByUrl } from '../../lib/imageUpload';
 import SortableGrid from './SortableGrid';
+import PastBikesList from './PastBikesList';
 
-const EMPTY = { title: '', subject: '', media: [], postId: '' };
+const EMPTY = { title: '', subject: '', media: [], postId: '', featuredAt: '' };
 
 export default function BikeOfTheMonthEditor() {
+  return (
+    <div className="flex flex-col gap-10">
+      <CurrentBikeForm />
+      <PastBikesList />
+    </div>
+  );
+}
+
+function CurrentBikeForm() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -57,7 +67,11 @@ export default function BikeOfTheMonthEditor() {
     try {
       // postId identifies "this bike feature" for reactions — keep the same one across
       // edits (adding photos, fixing a typo), only "Start New" below generates a fresh one.
-      const toSave = form.postId ? form : { ...form, postId: crypto.randomUUID() };
+      const toSave = {
+        ...form,
+        postId: form.postId || crypto.randomUUID(),
+        featuredAt: form.featuredAt || new Date().toISOString(),
+      };
       await setDoc(doc(db, 'settings', 'bikeOfTheMonth'), toSave);
       setForm(toSave);
       setStatus('Saved.');
@@ -69,14 +83,37 @@ export default function BikeOfTheMonthEditor() {
   }
 
   async function handleStartNew() {
-    if (!confirm('Start a new Bike of the Month? This clears the title, subject, and photos — reactions on the current one will no longer be reachable. This can\'t be undone.')) {
-      return;
+    const hasContent = form.title || form.subject || form.media.length > 0;
+    const question = hasContent
+      ? 'Start a new Bike of the Month? The current one moves to "Past Bikes of the Month" with its photos and reactions.'
+      : 'Start a new Bike of the Month?';
+    if (!confirm(question)) return;
+
+    setStatus('');
+    try {
+      const now = new Date().toISOString();
+      const fresh = { ...EMPTY, postId: crypto.randomUUID(), featuredAt: now };
+      // One atomic write: archive the current bike and reset the live one together, so a
+      // failure can never leave the old bike lost (or half-archived).
+      const batch = writeBatch(db);
+      if (hasContent) {
+        const postId = form.postId || crypto.randomUUID();
+        batch.set(doc(db, 'pastBikesOfTheMonth', postId), {
+          title: form.title,
+          subject: form.subject,
+          media: form.media,
+          postId,
+          featuredAt: form.featuredAt || now,
+          archivedAt: now,
+        });
+      }
+      batch.set(doc(db, 'settings', 'bikeOfTheMonth'), fresh);
+      await batch.commit();
+      setForm(fresh);
+      setStatus('Started fresh — the previous bike is saved under Past Bikes of the Month. Add a title, subject, and photos, then Save.');
+    } catch {
+      setStatus('Something went wrong — nothing was changed. Try again.');
     }
-    await Promise.all(form.media.map((m) => deleteStorageFileByUrl(storage, m.url)));
-    const fresh = { ...EMPTY, postId: crypto.randomUUID() };
-    setForm(fresh);
-    await setDoc(doc(db, 'settings', 'bikeOfTheMonth'), fresh);
-    setStatus('Started fresh — add a title, subject, and photos, then Save.');
   }
 
   const mediaWithKeys = form.media.map((m, i) => ({ ...m, _key: `${m.url}-${i}` }));
@@ -170,8 +207,8 @@ export default function BikeOfTheMonthEditor() {
         </button>
       </div>
       <p className="text-xs text-neutral-600 -mt-2">
-        "Save" edits the current feature (reactions stay intact). "Start new" clears
-        everything for a fresh bike next month and resets reactions.
+        "Save" edits the current feature (reactions stay intact). "Start new" moves this
+        bike to Past Bikes of the Month and clears the form for the next one.
       </p>
       {status && <p className="text-sm text-neutral-400">{status}</p>}
     </form>

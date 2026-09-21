@@ -5,33 +5,43 @@ service firebase.storage {
       return request.auth != null && request.auth.uid == 'eKhkvvFajRX6XfOP3baFBh5n5V33';
     }
 
+    // Size limits reference request.resource, which doesn't exist on a delete — so
+    // create/update and delete are separate rules (a combined "write" rule silently
+    // denied every delete).
     match /backfire/gallery/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 200 * 1024 * 1024;
+      allow create, update: if isAdmin() && request.resource.size < 200 * 1024 * 1024;
+      allow delete: if isAdmin();
     }
     match /backfire/hero/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow create, update: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if isAdmin();
     }
     match /backfire/events/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow create, update: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if isAdmin();
     }
     match /backfire/products/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow create, update: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if isAdmin();
     }
     match /backfire/bike-of-the-month/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow create, update: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if isAdmin();
     }
     // Community photo/video submissions — anyone can upload (moderation happens in
-    // Firestore, not here), capped at 50MB, images or short videos only.
+    // Firestore, not here), capped at 50MB, images or short videos only. Only the
+    // admin can delete.
     match /backfire/community/{allPaths=**} {
       allow read: if true;
-      allow write: if request.resource.size < 50 * 1024 * 1024
+      allow create, update: if request.resource.size < 50 * 1024 * 1024
         && (request.resource.contentType.matches('image/.*')
             || request.resource.contentType.matches('video/.*'));
+      allow delete: if isAdmin();
     }
     match /{allPaths=**} {
       allow read, write: if false;

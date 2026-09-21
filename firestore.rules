@@ -38,6 +38,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Archive of previous Bikes of the Month — public read, admin-only write.
+    match /pastBikesOfTheMonth/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Facebook-style reactions — no login, just a per-browser anonymous device ID.
     // Publicly readable (needed to show counts) and publicly writable (this is a
     // low-stakes fun feature, not something that needs real auth to protect).
